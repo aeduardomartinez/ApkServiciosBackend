@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS perfiles (
 CREATE TABLE IF NOT EXISTS clientes (
     id          BIGSERIAL PRIMARY KEY,
     nombre      VARCHAR(150) NOT NULL,
-    apellido    VARCHAR(150) NOT NULL,
+    apellido    VARCHAR(150) ,
     telefono    VARCHAR(20)  NOT NULL,
     CONSTRAINT uq_clientes_telefono UNIQUE (telefono)
     );
