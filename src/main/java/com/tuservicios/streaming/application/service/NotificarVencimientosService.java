@@ -47,7 +47,8 @@ public class NotificarVencimientosService implements NotificarVencimientosUseCas
       // 1. Obtener la fecha actual base
       LocalDate hoy = LocalDate.now(clock);
 
-      // 2. Definir los días en los que buscaremos vencimientos: hoy (0 días) y pasado mañana (2 días)
+      // 2. Definir los días en los que buscaremos vencimientos: hoy (0 días) y pasado
+      // mañana (2 días)
       List<LocalDate> fechasObjetivo = List.of(hoy, hoy.plusDays(2));
 
       return vencimientosQueryPort.findPerfilesActivosConFechaFinIn(fechasObjetivo).flatMap(row -> {
@@ -66,19 +67,23 @@ public class NotificarVencimientosService implements NotificarVencimientosUseCas
             return Mono.empty();
          }
 
-         // 6. Construir el objeto NotificacionRequest con sus 3 parámetros para la plantilla
-         NotificacionRequest request = construirRequest(telefono, tipo, row.servicioNombre(), row.fechaFin());
+         // 6. Construir el objeto NotificacionRequest con sus 3 parámetros para la
+         // plantilla
+         NotificacionRequest request = construirRequest(telefono, tipo, row.clienteNombre(), row.servicioNombre(),
+               row.fechaFin());
 
          // 7. Intentar crear un log en base de datos para no enviar mensajes duplicados
-         return notificacionLogPort.tryCreate(row.perfilId(), tipo, CANAL_WHATSAPP, Instant.now(clock)).flatMap(created -> {
-            if (!created) {
-               return Mono.empty();
-            }
+         return notificacionLogPort.tryCreate(row.perfilId(), tipo, CANAL_WHATSAPP, Instant.now(clock))
+               .flatMap(created -> {
+                  if (!created) {
+                     return Mono.empty();
+                  }
 
-            return notificacionPort
-                  .enviar(request)
-                  .flatMap(providerMessageId -> notificacionLogPort.setProviderMessageId(row.perfilId(), tipo, CANAL_WHATSAPP, providerMessageId));
-         });
+                  return notificacionPort
+                        .enviar(request)
+                        .flatMap(providerMessageId -> notificacionLogPort.setProviderMessageId(row.perfilId(), tipo,
+                              CANAL_WHATSAPP, providerMessageId));
+               });
       }, 8).then();
    }
 
@@ -92,12 +97,14 @@ public class NotificarVencimientosService implements NotificarVencimientosUseCas
       return null;
    }
 
-   private NotificacionRequest construirRequest(String telefono, TipoNotificacionVencimiento tipo, String nombreServicio, LocalDate fechaFin) {
+   private NotificacionRequest construirRequest(String telefono, TipoNotificacionVencimiento tipo, String clienteNombre,
+         String nombreServicio, LocalDate fechaFin) {
 
       // Parámetro {{3}} en la plantilla de Meta (Fecha exacta del vencimiento)
       String fechaTexto = fechaFin.format(FORMATO_FECHA);
 
-      // Parámetro {{2}} en la plantilla de Meta (El estado del servicio + la instrucción de Nequi)
+      // Parámetro {{2}} en la plantilla de Meta (El estado del servicio + la
+      // instrucción de Nequi)
       String estadoTexto = switch (tipo) {
          case FIVE_DAYS_BEFORE -> "se vence en 5 días"; // Fallback por si acaso
          case TWO_DAYS_BEFORE -> "se vence en 2 días. Si deseas continuar con el perfil, envía tu pago al Nequi";
@@ -107,8 +114,10 @@ public class NotificarVencimientosService implements NotificarVencimientosUseCas
       // Se usa la plantilla de properties (por defecto: streaming_notif)
       Plantilla plantilla = new Plantilla(templateName, "es");
 
-      // El constructor de request armará el JSON de Meta con la lista: {{1}}=nombreServicio, {{2}}=estadoTexto, {{3}}=fechaTexto
-      return new NotificacionRequest(telefono, Canal.WHATSAPP, plantilla, List.of(nombreServicio, estadoTexto, fechaTexto));
+      // El constructor de request armará el JSON de Meta con la lista:
+      // {{1}}=nombreServicio, {{2}}=estadoTexto, {{3}}=fechaTexto
+      return new NotificacionRequest(telefono, Canal.WHATSAPP, plantilla,
+            List.of(clienteNombre, nombreServicio, estadoTexto, fechaTexto));
    }
 
    private String normalizarTelefono(String telefono) {
