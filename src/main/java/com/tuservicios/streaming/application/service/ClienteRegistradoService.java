@@ -43,7 +43,9 @@ public class ClienteRegistradoService implements ClienteRegistradoUseCase {
 
    @Override
    public Flux<ClienteRegistrado> listarClientes() {
-      return repo.findAll();
+      return repo.findAll()
+                 .doOnComplete(() -> log.info("Listado de clientes completado"))
+                 .doOnError(e -> log.error("Error al listar clientes: {}", e.getMessage()));
    }
 
    @Override
