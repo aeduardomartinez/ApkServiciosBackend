@@ -32,7 +32,7 @@ public class PerfilCuenta {
       this.cliente     = c;
       this.fechaInicio = inicio;
       this.fechaFin    = fin;
-      this.estado      = EstadoPerfil.ACTIVO;
+      this.estado      = determinarEstado(fin);
    }
 
    public void actualizar(Cliente c, LocalDate inicio, LocalDate fin) {
@@ -40,6 +40,7 @@ public class PerfilCuenta {
       this.cliente     = c;
       this.fechaInicio = inicio;
       this.fechaFin    = fin;
+      this.estado      = determinarEstado(fin);
    }
 
    public void liberar() {
@@ -61,4 +62,11 @@ public class PerfilCuenta {
    public boolean estaDisponible()    { return estado == EstadoPerfil.LIBRE; }
    public boolean tieneClienteActivo(){ return cliente != null && estado == EstadoPerfil.ACTIVO; }
    public void setEstado(EstadoPerfil estado) { this.estado = estado; }
+
+   private EstadoPerfil determinarEstado(LocalDate fechaFin) {
+      if (fechaFin != null && LocalDate.now().isAfter(fechaFin)) {
+         return EstadoPerfil.VENCIDO;
+      }
+      return EstadoPerfil.ACTIVO;
+   }
 }

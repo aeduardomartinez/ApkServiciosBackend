@@ -23,30 +23,6 @@ public class CuentaPersistenceMapper {
             c.getCuposExtraContratados());
    }
 
-//   public PerfilEntity toEntity(PerfilCuenta p, Long cuentaId) {
-//      PerfilEntity entity = new PerfilEntity();
-//      entity.setIdPerfil(p.getIdPerfil());   // 🔥 Obligatorio
-//      entity.setCuentaId(cuentaId);
-//      if (p.getCliente() != null) {
-//         entity.setNombreCliente(p.getCliente().nombreCompleto());
-//         entity.setTelefonoCliente(p.getCliente().telefono());
-//         entity.setFechaInicio(p.getCliente().fechaInicio());
-//         entity.setFechaFin(p.getCliente().fechaFin());
-//      } else {
-//         entity.setIdPerfil(p.getIdPerfil());
-//         entity.setCuentaId(cuentaId);
-//         entity.setNombreCliente(clienteNombre(p));
-//         entity.setTelefonoCliente(clienteTelefono(p));
-//         entity.setFechaInicio(null);
-//         entity.setFechaFin(null);
-//         // 🔑 CLAVE: Marcar como nuevo para forzar INSERT
-//         // entity.markAsNotNew(); // NO llamar esto, dejar isNew = true
-//      }
-//
-//      entity.setEstado(p.getEstado() != null ? p.getEstado().name() : "LIBRE");
-//      return entity;
-//   }
-
    // ===== ENTITY → DOMINIO =====
 
    public Cuenta toDomain(CuentaEntity e, Servicio servicio, List<PerfilEntity> perfilesE) {
@@ -65,7 +41,7 @@ public class CuentaPersistenceMapper {
       EstadoPerfil estado = EstadoPerfil.fromDb(e.getEstado());
 
       Cliente cliente = null;
-      if (estado == EstadoPerfil.ACTIVO && e.getNombreCliente() != null) {
+      if ((estado == EstadoPerfil.ACTIVO || estado == EstadoPerfil.VENCIDO) && e.getNombreCliente() != null) {
          cliente = new Cliente(e.getNombreCliente(), e.getTelefonoCliente());
       }
 

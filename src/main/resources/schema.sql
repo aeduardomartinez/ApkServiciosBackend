@@ -37,6 +37,18 @@ CREATE TABLE IF NOT EXISTS clientes (
     telefono    VARCHAR(20)  NOT NULL,
     CONSTRAINT uq_clientes_telefono UNIQUE (telefono)
     );
+
+CREATE TABLE IF NOT EXISTS service_notification_log (
+    id BIGSERIAL PRIMARY KEY,
+    perfil_id BIGINT NOT NULL REFERENCES perfiles(id_perfil) ON DELETE CASCADE,
+    notification_type VARCHAR(50) NOT NULL,
+    channel VARCHAR(20) NOT NULL,
+    sent_at TIMESTAMPTZ NOT NULL,
+    provider_message_id TEXT NULL,
+    UNIQUE (perfil_id, notification_type, channel)
+    );
+
+CREATE INDEX IF NOT EXISTS idx_snl_perfil ON service_notification_log(perfil_id);
 -- Agregar referencia opcional en perfiles
 ALTER TABLE perfiles
     ADD COLUMN IF NOT EXISTS cliente_id BIGINT NULL REFERENCES clientes(id) ON DELETE SET NULL;
