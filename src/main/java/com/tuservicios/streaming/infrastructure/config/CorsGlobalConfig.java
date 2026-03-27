@@ -21,8 +21,9 @@ public class CorsGlobalConfig {
       config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
       config.setAllowedHeaders(List.of("*"));
 
-      // Si usas cookies o Authorization header JWT:
-      config.setAllowCredentials(true);
+      // Desactivamos credenciales para permitir el uso de "*" en origenes, 
+      // lo cual es necesario para que Android no bloquee la peticion.
+      config.setAllowCredentials(false);
 
       UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
       source.registerCorsConfiguration("/**", config);
