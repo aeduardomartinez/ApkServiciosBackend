@@ -37,12 +37,19 @@ public class WhatsAppAdapter implements NotificacionPort {
       String to = normalizeE164DigitsOnly(request.telefonoE164());
 
       if (to.isBlank()) {
-         return Mono.error(new IllegalArgumentException("Teléfono inválido para WhatsApp"));
+         return Mono.error(new IllegalArgumentException("Teléfono inválido: '" + request.telefonoE164() + "'"));
       }
 
       if (request.plantilla() == null) {
          return Mono.error(new IllegalArgumentException("La plantilla de WhatsApp es obligatoria"));
       }
+
+      // LOG DETALLADO: Ver exactamente qué se enviará a Meta
+      log.info("[WhatsApp] Preparando envío → telefono={}, plantilla={}, idioma={}, params={}",
+            to,
+            request.plantilla().nombre(),
+            request.plantilla().languageCode(),
+            request.parametros());
 
       Object payload = buildTemplatePayload(
             to,
@@ -52,6 +59,7 @@ public class WhatsAppAdapter implements NotificacionPort {
       );
 
       String url = "/" + props.apiVersion() + "/" + props.phoneNumberId() + "/messages";
+      log.info("[WhatsApp] URL Meta API: {}{}", props.baseUrl(), url);
 
       return whatsappWebClient.post()
                               .uri(url)
@@ -61,12 +69,14 @@ public class WhatsAppAdapter implements NotificacionPort {
                               .bodyValue(payload)
                               .retrieve()
                               .onStatus(HttpStatusCode::isError, response -> response.bodyToMono(String.class)
-                                    .doOnNext(body -> log.error("Error de Meta API (WhatsApp): body={}", body))
-                                    .flatMap(body -> Mono.error(new IllegalStateException("Error de Meta API: " + body))))
+                                    .doOnNext(body -> log.error("[WhatsApp] ERROR Meta API → status={} body={}",
+                                          response.statusCode(), body))
+                                    .flatMap(body -> Mono.error(new IllegalStateException("Error Meta API: " + body))))
                               .bodyToMono(WhatsappSendResponse.class)
-                              .doOnNext(res -> log.info("Mensaje enviado correctamente vía Meta API. id={}", res.messages.get(0).id))
+                              .doOnNext(res -> log.info("[WhatsApp] ✅ Enviado correctamente → messageId={}",
+                                    res.messages != null && !res.messages.isEmpty() ? res.messages.get(0).id : "N/A"))
                               .map(this::extractMessageIdOrThrow)
-                              .doOnError(e -> log.error("Fallo al enviar notificación vía WhatsApp: {}", e.getMessage()));
+                              .doOnError(e -> log.error("[WhatsApp] ❌ Fallo al enviar → error={}", e.getMessage(), e));
    }
 
    private Object buildTemplatePayload(String to,
