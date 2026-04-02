@@ -1,7 +1,5 @@
 package com.tuservicios.streaming.application.service;
 
-import static reactor.core.publisher.Operators.as;
-
 import java.time.LocalDate;
 import java.util.List;
 
@@ -148,7 +146,7 @@ public class CuentaService implements CuentaUseCase {
                                  .switchIfEmpty(Mono.error(
                                        new ClienteNoEncontradoException("Cliente " + clienteId + " no encontrado")))
                                  .flatMap(cr -> {
-                                    Cliente cliente = new Cliente(cr.nombreCompleto(), cr.telefono());
+                                    Cliente cliente = new Cliente(cr.id(), cr.nombreCompleto(), cr.telefono());
                                     return cuentaRepo.asignarClienteEnPerfilLibre(
                                           cuentaId, clienteId, cliente, fechaInicio, fechaFin);
                                  })
@@ -165,7 +163,7 @@ public class CuentaService implements CuentaUseCase {
                                  .switchIfEmpty(Mono.error(
                                        new ClienteNoEncontradoException("Cliente " + clienteId + " no encontrado")))
                                  .flatMap(cr -> {
-                                    Cliente cliente = new Cliente(cr.nombreCompleto(), cr.telefono());
+                                    Cliente cliente = new Cliente(cr.id(), cr.nombreCompleto(), cr.telefono());
                                     return cuentaRepo.actualizarClienteEnPerfil(
                                           cuentaId, perfilId, clienteId, cliente, fechaInicio, fechaFin);
                                  })

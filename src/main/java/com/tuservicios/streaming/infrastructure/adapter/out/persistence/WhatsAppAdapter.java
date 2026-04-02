@@ -61,6 +61,13 @@ public class WhatsAppAdapter implements NotificacionPort {
       String url = "/" + props.apiVersion() + "/" + props.phoneNumberId() + "/messages";
       log.info("[WhatsApp] URL Meta API: {}{}", props.baseUrl(), url);
 
+      try {
+         com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+         log.info("[WhatsApp] PAYLOAD JSON: {}", mapper.writeValueAsString(payload));
+      } catch (Exception e) {
+         log.info("[WhatsApp] Error en log JSON (esto no afecta el envío): {}", e.getMessage());
+      }
+
       return whatsappWebClient.post()
                               .uri(url)
                               .header(HttpHeaders.AUTHORIZATION, "Bearer " + props.accessToken())

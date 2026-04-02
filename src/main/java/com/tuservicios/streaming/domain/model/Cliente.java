@@ -1,9 +1,8 @@
 package com.tuservicios.streaming.domain.model;
 
-import java.time.LocalDate;
 import java.util.Objects;
 
-public record Cliente(String nombreCompleto, String telefono) {
+public record Cliente(Long id, String nombreCompleto, String telefono) {
 
    public Cliente {
       Objects.requireNonNull(nombreCompleto, "Nombre no puede ser null");
@@ -16,7 +15,5 @@ public record Cliente(String nombreCompleto, String telefono) {
       if (telefono.isBlank()) {
          throw new IllegalArgumentException("Teléfono no puede estar vacío");
       }
-
-
    }
 }

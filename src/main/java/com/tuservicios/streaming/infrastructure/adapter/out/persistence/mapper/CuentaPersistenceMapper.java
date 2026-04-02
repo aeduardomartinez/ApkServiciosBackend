@@ -42,7 +42,7 @@ public class CuentaPersistenceMapper {
 
       Cliente cliente = null;
       if ((estado == EstadoPerfil.ACTIVO || estado == EstadoPerfil.VENCIDO) && e.getNombreCliente() != null) {
-         cliente = new Cliente(e.getNombreCliente(), e.getTelefonoCliente());
+         cliente = new Cliente(e.getClienteId(), e.getNombreCliente(), e.getTelefonoCliente());
       }
 
       return new PerfilCuenta(e.getIdPerfil(), cliente, e.getFechaInicio(),  // fechas del perfil, no del cliente

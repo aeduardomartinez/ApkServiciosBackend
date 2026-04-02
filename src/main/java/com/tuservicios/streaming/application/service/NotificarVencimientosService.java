@@ -19,6 +19,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 
@@ -73,23 +74,37 @@ public class NotificarVencimientosService implements NotificarVencimientosUseCas
 
    @Override
    public Mono<Void> ejecutarPorPerfil(Long perfilId) {
+      log.info("INICIO: ejecutarPorPerfil (Manual) id={} (Fecha sistema: {})", perfilId, LocalDate.now(clock));
       LocalDate hoy = LocalDate.now(clock);
 
-      return vencimientosQueryPort.findPerfilPorId(perfilId).flatMap(row -> {
-         long dias = ChronoUnit.DAYS.between(hoy, row.fechaFin());
-         TipoNotificacionVencimiento tipo = (dias <= 0) ? TipoNotificacionVencimiento.EXPIRED_TODAY : TipoNotificacionVencimiento.TWO_DAYS_BEFORE;
+      return vencimientosQueryPort.findPerfilPorId(perfilId)
+            .map(Optional::of)
+            .defaultIfEmpty(Optional.empty())
+            .flatMap(opt -> {
+               if (opt.isEmpty()) {
+                  log.error("DB_ERROR: No se encontró registro para perfilId={} en la base de datos.", perfilId);
+                  return Mono.error(new IllegalArgumentException("No se encontró el perfil con ID: " + perfilId));
+               }
 
-         String telefono = normalizarTelefono(row.telefono());
-         if (telefono.isBlank()) return Mono.empty();
+               VencimientosQueryPort.VencimientoPerfilRow row = opt.get();
+               long dias = ChronoUnit.DAYS.between(hoy, row.fechaFin());
+               TipoNotificacionVencimiento tipo = (dias <= 0) ? TipoNotificacionVencimiento.EXPIRED_TODAY : TipoNotificacionVencimiento.TWO_DAYS_BEFORE;
 
-         NotificacionRequest request = construirRequest(row.perfilId(), telefono, tipo, row.clienteNombre(), row.servicioNombre(),
-               row.fechaFin());
+               String telefono = normalizarTelefono(row.telefono());
+               if (telefono.isBlank()) {
+                  log.warn("El perfil {} no tiene un teléfono válido para notificar.", perfilId);
+                  return Mono.empty();
+               }
 
-         log.info("Manual-envío recordatorio perfilId={}, cliente={}, servicio={}", 
-               perfilId, row.clienteNombre(), row.servicioNombre());
+               NotificacionRequest request = construirRequest(row.perfilId(), telefono, tipo, row.clienteNombre(), row.servicioNombre(),
+                     row.fechaFin());
 
-         return notificacionPort.enviar(request).then();
-      }).switchIfEmpty(Mono.error(new IllegalArgumentException("No se encontró el perfil con ID: " + perfilId)));
+               log.info("Manual-envío recordatorio perfilId={}, cliente={}, servicio={}", 
+                     perfilId, row.clienteNombre(), row.servicioNombre());
+
+               return notificacionPort.enviar(request);
+            })
+            .then();
    }
 
    private TipoNotificacionVencimiento mapTipo(long dias) {
@@ -105,8 +120,8 @@ public class NotificarVencimientosService implements NotificarVencimientosUseCas
       String fechaTexto = fechaFin.format(FORMATO_FECHA);
       String estadoTexto = (tipo == TipoNotificacionVencimiento.EXPIRED_TODAY) ? "(VENCIDO)" : "";
 
-      // DIFERENCIACIÓN CLAVE: Incluimos el ID de perfil en el nombre del servicio para que el mensaje sea único ante Meta
-      String servicioDiferenciado = nombreServicio + " (Ref: " + perfilId + ")";
+      // DIFERENCIACIÓN CLAVE: Incluimos el ID de perfil y un timestamp en el nombre del servicio para que el mensaje sea único ante Meta
+      String servicioDiferenciado = nombreServicio + " (Ref: " + perfilId + "-" + (System.currentTimeMillis() % 100000) + ")";
 
       Plantilla plantilla = new Plantilla(templateName, "es");
 
