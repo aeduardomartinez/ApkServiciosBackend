@@ -22,7 +22,7 @@ public class SelfPingScheduler {
     * Se ejecuta cada 10 minutos para mantener la aplicación activa en Render.
     * Render apaga las instancias gratuitas después de 15 min de inactividad.
     */
-   @Scheduled(fixedRate = 600_000) // cada 10 minutos (600,000 ms)
+   @Scheduled(fixedRate = 120_000) // cada 10 minutos (600,000 ms)
    public void selfPing() {
       if (webClient == null) {
          log.debug("Self-ping desactivado: no se configuró 'app.self-ping-url'");
