@@ -1,7 +1,6 @@
 package com.tuservicios.streaming.application.service;
 
 import com.tuservicios.streaming.application.port.in.NotificarVencimientosUseCase;
-import com.tuservicios.streaming.application.port.out.NotificacionLogPort;
 import com.tuservicios.streaming.application.port.out.NotificacionPort;
 import com.tuservicios.streaming.application.port.out.VencimientosQueryPort;
 import com.tuservicios.streaming.application.port.out.dto.Canal;
@@ -17,7 +16,6 @@ import org.springframework.beans.factory.annotation.Value;
 import reactor.core.publisher.Mono;
 
 import java.time.Clock;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -29,15 +27,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class NotificarVencimientosService implements NotificarVencimientosUseCase {
 
-   private static final String CANAL_WHATSAPP = "WHATSAPP";
-
    private static final DateTimeFormatter FORMATO_FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
    private final VencimientosQueryPort vencimientosQueryPort;
 
    private final NotificacionPort notificacionPort;
-
-   private final NotificacionLogPort notificacionLogPort;
 
    private final Clock clock;
 
@@ -49,38 +43,31 @@ public class NotificarVencimientosService implements NotificarVencimientosUseCas
       // 1. Obtener la fecha actual base
       LocalDate hoy = LocalDate.now(clock);
 
-      // 2. Definir los días en los que buscaremos vencimientos: hoy (0 días) y pasado
-      // mañana (2 días)
-      List<LocalDate> fechasObjetivo = List.of(hoy, hoy.plusDays(2));
+      // 2. Definir los días en los que buscaremos vencimientos
+      List<LocalDate> fechasObjetivo = List.of(
+            hoy.minusDays(1), // Ayer (por si se pasó)
+            hoy,              // Hoy
+            hoy.plusDays(2),  // Mañana pasado
+            hoy.plusDays(5)   // 5 días
+      );
 
       return vencimientosQueryPort.findPerfilesActivosConFechaFinIn(fechasObjetivo).flatMap(row -> {
-         // 3. Calculamos exactamente cuántos días faltan desde hoy hasta la fecha de fin
+         // 3. Calculamos exactamente cuántos días faltan
          long dias = ChronoUnit.DAYS.between(hoy, row.fechaFin());
-
-         // 4. Mapear la cantidad de días al tipo (2 días antes, o vencido hoy)
          TipoNotificacionVencimiento tipo = mapTipo(dias);
-         if (tipo == null) {
-            return Mono.empty();
-         }
+         if (tipo == null) return Mono.empty();
 
-         // 5. Dejar el número de teléfono con solo dígitos para la API de WhatsApp
          String telefono = normalizarTelefono(row.telefono());
-         if (telefono.isBlank()) {
-            return Mono.empty();
-         }
+         if (telefono.isBlank()) return Mono.empty();
 
-         // 6. Construir el objeto NotificacionRequest con sus 3 parámetros para la
-         // plantilla
-         NotificacionRequest request = construirRequest(telefono, tipo, row.clienteNombre(), row.servicioNombre(),
+         // 4. Construir request diferenciado por ID de perfil para evitar bloqueos por duplicado
+         NotificacionRequest request = construirRequest(row.perfilId(), telefono, tipo, row.clienteNombre(), row.servicioNombre(),
                row.fechaFin());
 
-         // 7. Enviar mensaje siempre (se ha eliminado la lógica de prevención de duplicados)
-         return notificacionPort.enviar(request)
-               .flatMap(providerMessageId -> {
-                  log.info("Recordatorio automático enviado a perfilId={}", row.perfilId());
-                  return notificacionLogPort.tryCreate(row.perfilId(), tipo, CANAL_WHATSAPP, Instant.now(clock))
-                        .then(notificacionLogPort.setProviderMessageId(row.perfilId(), tipo, CANAL_WHATSAPP, providerMessageId));
-               });
+         // 5. Enviar mensaje directamente (sin logs/bloqueos)
+         log.info("Auto-envío recordatorio perfilId={}, cliente={}, servicio={}", 
+               row.perfilId(), row.clienteNombre(), row.servicioNombre());
+         return notificacionPort.enviar(request).then();
       }, 8).then();
    }
 
@@ -90,65 +77,46 @@ public class NotificarVencimientosService implements NotificarVencimientosUseCas
 
       return vencimientosQueryPort.findPerfilPorId(perfilId).flatMap(row -> {
          long dias = ChronoUnit.DAYS.between(hoy, row.fechaFin());
-         
-         // Para envío manual, si dias <= 0 es EXPIRED_TODAY, si > 0 es TWO_DAYS_BEFORE
          TipoNotificacionVencimiento tipo = (dias <= 0) ? TipoNotificacionVencimiento.EXPIRED_TODAY : TipoNotificacionVencimiento.TWO_DAYS_BEFORE;
 
          String telefono = normalizarTelefono(row.telefono());
-         if (telefono.isBlank()) {
-            return Mono.empty();
-         }
+         if (telefono.isBlank()) return Mono.empty();
 
-         NotificacionRequest request = construirRequest(telefono, tipo, row.clienteNombre(), row.servicioNombre(),
+         NotificacionRequest request = construirRequest(row.perfilId(), telefono, tipo, row.clienteNombre(), row.servicioNombre(),
                row.fechaFin());
 
-         log.info("Enviando recordatorio MANUAL a perfilId={}, cliente={}, telefono={}", 
-               perfilId, row.clienteNombre(), telefono);
+         log.info("Manual-envío recordatorio perfilId={}, cliente={}, servicio={}", 
+               perfilId, row.clienteNombre(), row.servicioNombre());
 
-         // Registro el log pero no bloqueo el envío manual (siempre permito reenvío manual)
-         return notificacionPort.enviar(request)
-               .flatMap(providerMessageId -> notificacionLogPort.tryCreate(row.perfilId(), tipo, CANAL_WHATSAPP, Instant.now(clock))
-                     .then(notificacionLogPort.setProviderMessageId(row.perfilId(), tipo, CANAL_WHATSAPP, providerMessageId)));
+         return notificacionPort.enviar(request).then();
       }).switchIfEmpty(Mono.error(new IllegalArgumentException("No se encontró el perfil con ID: " + perfilId)));
    }
 
    private TipoNotificacionVencimiento mapTipo(long dias) {
-      if (dias == 2) {
-         return TipoNotificacionVencimiento.TWO_DAYS_BEFORE;
-      }
-      if (dias == 0) {
-         return TipoNotificacionVencimiento.EXPIRED_TODAY;
-      }
+      if (dias == 5) return TipoNotificacionVencimiento.FIVE_DAYS_BEFORE;
+      if (dias == 2) return TipoNotificacionVencimiento.TWO_DAYS_BEFORE;
+      if (dias <= 0) return TipoNotificacionVencimiento.EXPIRED_TODAY;
       return null;
    }
 
-   private NotificacionRequest construirRequest(String telefono, TipoNotificacionVencimiento tipo, String clienteNombre,
+   private NotificacionRequest construirRequest(Long perfilId, String telefono, TipoNotificacionVencimiento tipo, String clienteNombre,
          String nombreServicio, LocalDate fechaFin) {
 
-      // Parámetro {{3}} en la plantilla de Meta (Fecha exacta del vencimiento)
       String fechaTexto = fechaFin.format(FORMATO_FECHA);
+      String estadoTexto = (tipo == TipoNotificacionVencimiento.EXPIRED_TODAY) ? "(VENCIDO)" : "";
 
-      // Parámetro {{2}} en la plantilla de Meta (El estado del servicio)
-      // Nota: El texto fijo en Meta es "... servicio de {{2}} {{3}} está próximo a vencer."
-      String estadoTexto = switch (tipo) {
-         case FIVE_DAYS_BEFORE -> ""; 
-         case TWO_DAYS_BEFORE -> "";
-         case EXPIRED_TODAY -> "(VENCIDO)";
-      };
+      // DIFERENCIACIÓN CLAVE: Incluimos el ID de perfil en el nombre del servicio para que el mensaje sea único ante Meta
+      String servicioDiferenciado = nombreServicio + " (Ref: " + perfilId + ")";
 
-      // Se usa la plantilla de properties (por defecto: streaming_notif)
       Plantilla plantilla = new Plantilla(templateName, "es");
 
-      // El constructor de request armará el JSON de Meta con la lista:
-      // {{1}}=nombreServicio, {{2}}=estadoTexto, {{3}}=fechaTexto
+      // {{1}}=NombreCliente, {{2}}=ServicioDiferenciado, {{3}}=EstadoTexto, {{4}}=FechaTexto
       return new NotificacionRequest(telefono, Canal.WHATSAPP, plantilla,
-            List.of(clienteNombre, nombreServicio, estadoTexto, fechaTexto));
+            List.of(clienteNombre, servicioDiferenciado, estadoTexto, fechaTexto));
    }
 
    private String normalizarTelefono(String telefono) {
-      if (telefono == null) {
-         return "";
-      }
+      if (telefono == null) return "";
       return telefono.replaceAll("[^0-9]", "");
    }
 }
