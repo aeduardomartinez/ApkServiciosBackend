@@ -4,4 +4,5 @@ import reactor.core.publisher.Mono;
 
 public interface NotificarVencimientosUseCase {
    Mono<Void> ejecutar();
+   Mono<Void> ejecutarPorPerfil(Long perfilId);
 }

@@ -87,6 +87,31 @@ public class NotificarVencimientosService implements NotificarVencimientosUseCas
       }, 8).then();
    }
 
+   @Override
+   public Mono<Void> ejecutarPorPerfil(Long perfilId) {
+      LocalDate hoy = LocalDate.now(clock);
+
+      return vencimientosQueryPort.findPerfilPorId(perfilId).flatMap(row -> {
+         long dias = ChronoUnit.DAYS.between(hoy, row.fechaFin());
+         
+         // Para envío manual, si dias <= 0 es EXPIRED_TODAY, si > 0 es TWO_DAYS_BEFORE
+         TipoNotificacionVencimiento tipo = (dias <= 0) ? TipoNotificacionVencimiento.EXPIRED_TODAY : TipoNotificacionVencimiento.TWO_DAYS_BEFORE;
+
+         String telefono = normalizarTelefono(row.telefono());
+         if (telefono.isBlank()) {
+            return Mono.empty();
+         }
+
+         NotificacionRequest request = construirRequest(telefono, tipo, row.clienteNombre(), row.servicioNombre(),
+               row.fechaFin());
+
+         // Registro el log pero no bloqueo el envío manual (siempre permito reenvío manual)
+         return notificacionPort.enviar(request)
+               .flatMap(providerMessageId -> notificacionLogPort.tryCreate(row.perfilId(), tipo, CANAL_WHATSAPP, Instant.now(clock))
+                     .then(notificacionLogPort.setProviderMessageId(row.perfilId(), tipo, CANAL_WHATSAPP, providerMessageId)));
+      });
+   }
+
    private TipoNotificacionVencimiento mapTipo(long dias) {
       if (dias == 2) {
          return TipoNotificacionVencimiento.TWO_DAYS_BEFORE;
@@ -106,9 +131,9 @@ public class NotificarVencimientosService implements NotificarVencimientosUseCas
       // Parámetro {{2}} en la plantilla de Meta (El estado del servicio + la
       // instrucción de Nequi)
       String estadoTexto = switch (tipo) {
-         case FIVE_DAYS_BEFORE -> "se vence en 5 días"; // Fallback por si acaso
+         case FIVE_DAYS_BEFORE -> "se vence en 5 días";
          case TWO_DAYS_BEFORE -> "se vence en 2 días. Si deseas continuar con el perfil, envía tu pago al Nequi";
-         case EXPIRED_TODAY -> "se venció hoy. Si deseas continuar con el perfil, envía tu pago al Nequi";
+         case EXPIRED_TODAY -> "se encuentra vencido. Si deseas continuar con el perfil, envía tu pago al Nequi";
       };
 
       // Se usa la plantilla de properties (por defecto: streaming_notif)

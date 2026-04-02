@@ -37,4 +37,10 @@ public class NotificationController {
       notificarVencimientosService.ejecutar().subscribe();
       return ResponseEntity.ok("Notificación enviada correctamente.");
    }
+
+   @PostMapping("/send-reminder/{perfilId}")
+   public Mono<ResponseEntity<String>> sendReminderByPerfil(@PathVariable Long perfilId) {
+      return notificarVencimientosService.ejecutarPorPerfil(perfilId)
+            .thenReturn(ResponseEntity.ok("Recordatorio enviado correctamente al perfil."));
+   }
 }
