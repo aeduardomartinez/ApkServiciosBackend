@@ -11,7 +11,8 @@ public class NotificacionVencimientosScheduler {
 
    private final NotificarVencimientosUseCase useCase;
 
-   @Scheduled(cron = "0 0 8 * * *")
+   // 12:00 PM hora Colombia (UTC-5) = 17:00 UTC
+   @Scheduled(cron = "0 0 17 * * *")
    public void ejecutarDiario() {
       useCase.ejecutar()
              .subscribe();
