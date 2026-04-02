@@ -21,8 +21,10 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class NotificarVencimientosService implements NotificarVencimientosUseCase {
@@ -105,11 +107,14 @@ public class NotificarVencimientosService implements NotificarVencimientosUseCas
          NotificacionRequest request = construirRequest(telefono, tipo, row.clienteNombre(), row.servicioNombre(),
                row.fechaFin());
 
+         log.info("Enviando recordatorio MANUAL a perfilId={}, cliente={}, telefono={}", 
+               perfilId, row.clienteNombre(), telefono);
+
          // Registro el log pero no bloqueo el envío manual (siempre permito reenvío manual)
          return notificacionPort.enviar(request)
                .flatMap(providerMessageId -> notificacionLogPort.tryCreate(row.perfilId(), tipo, CANAL_WHATSAPP, Instant.now(clock))
                      .then(notificacionLogPort.setProviderMessageId(row.perfilId(), tipo, CANAL_WHATSAPP, providerMessageId)));
-      });
+      }).switchIfEmpty(Mono.error(new IllegalArgumentException("No se encontró el perfil con ID: " + perfilId)));
    }
 
    private TipoNotificacionVencimiento mapTipo(long dias) {
@@ -128,12 +133,12 @@ public class NotificarVencimientosService implements NotificarVencimientosUseCas
       // Parámetro {{3}} en la plantilla de Meta (Fecha exacta del vencimiento)
       String fechaTexto = fechaFin.format(FORMATO_FECHA);
 
-      // Parámetro {{2}} en la plantilla de Meta (El estado del servicio + la
-      // instrucción de Nequi)
+      // Parámetro {{2}} en la plantilla de Meta (El estado del servicio)
+      // Nota: El texto fijo en Meta es "... servicio de {{2}} {{3}} está próximo a vencer."
       String estadoTexto = switch (tipo) {
-         case FIVE_DAYS_BEFORE -> "se vence en 5 días";
-         case TWO_DAYS_BEFORE -> "se vence en 2 días. Si deseas continuar con el perfil, envía tu pago al Nequi";
-         case EXPIRED_TODAY -> "se encuentra vencido. Si deseas continuar con el perfil, envía tu pago al Nequi";
+         case FIVE_DAYS_BEFORE -> ""; 
+         case TWO_DAYS_BEFORE -> "";
+         case EXPIRED_TODAY -> "(VENCIDO)";
       };
 
       // Se usa la plantilla de properties (por defecto: streaming_notif)

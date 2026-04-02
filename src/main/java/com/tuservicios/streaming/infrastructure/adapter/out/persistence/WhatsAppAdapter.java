@@ -13,7 +13,9 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 import java.util.Objects;
 import org.springframework.http.HttpStatusCode;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class WhatsAppAdapter implements NotificacionPort {
@@ -56,17 +58,15 @@ public class WhatsAppAdapter implements NotificacionPort {
                               .header(HttpHeaders.AUTHORIZATION, "Bearer " + props.accessToken())
                               .contentType(MediaType.APPLICATION_JSON)
                               .accept(MediaType.APPLICATION_JSON)
-                              .bodyValue(buildTemplatePayload(
-                                    to,
-                                    request.plantilla().nombre(),
-                                    request.plantilla().languageCode(),
-                                    request.parametros()
-                              ))
+                              .bodyValue(payload)
                               .retrieve()
                               .onStatus(HttpStatusCode::isError, response -> response.bodyToMono(String.class)
+                                    .doOnNext(body -> log.error("Error de Meta API (WhatsApp): body={}", body))
                                     .flatMap(body -> Mono.error(new IllegalStateException("Error de Meta API: " + body))))
                               .bodyToMono(WhatsappSendResponse.class)
-                              .map(this::extractMessageIdOrThrow);
+                              .doOnNext(res -> log.info("Mensaje enviado correctamente vía Meta API. id={}", res.messages.get(0).id))
+                              .map(this::extractMessageIdOrThrow)
+                              .doOnError(e -> log.error("Fallo al enviar notificación vía WhatsApp: {}", e.getMessage()));
    }
 
    private Object buildTemplatePayload(String to,

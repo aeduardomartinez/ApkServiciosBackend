@@ -21,6 +21,8 @@ import com.tuservicios.streaming.infrastructure.adapter.in.web.mapper.ServicioWe
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+@Slf4j
 @RestController
 @RequestMapping("/api/notifications")
 public class NotificationController {
@@ -33,14 +35,24 @@ public class NotificationController {
    }
 
    @PostMapping("/send-reminder")
-   public ResponseEntity<String> sendReminder() {
-      notificarVencimientosService.ejecutar().subscribe();
-      return ResponseEntity.ok("Notificación enviada correctamente.");
+   public Mono<ResponseEntity<String>> sendReminder() {
+      log.info("REST: Iniciando envío masivo de recordatorios automáticos.");
+      return notificarVencimientosService.ejecutar()
+            .thenReturn(ResponseEntity.ok("Notificaciones masivas procesadas correctamente."))
+            .onErrorResume(err -> {
+               log.error("REST: Error inesperado en envío masivo: {}", err.getMessage());
+               return Mono.just(ResponseEntity.status(500).body("Error masivo: " + err.getMessage()));
+            });
    }
 
    @PostMapping("/send-reminder/{perfilId}")
    public Mono<ResponseEntity<String>> sendReminderByPerfil(@PathVariable Long perfilId) {
+      log.info("REST: Iniciando envío manual para perfilId={}", perfilId);
       return notificarVencimientosService.ejecutarPorPerfil(perfilId)
-            .thenReturn(ResponseEntity.ok("Recordatorio enviado correctamente al perfil."));
+            .thenReturn(ResponseEntity.ok("Recordatorio enviado correctamente al perfil."))
+            .onErrorResume(err -> {
+               log.error("REST: Error al enviar recordatorio manual perfilId={}: {}", perfilId, err.getMessage());
+               return Mono.just(ResponseEntity.status(400).body("Error: " + err.getMessage()));
+            });
    }
 }
