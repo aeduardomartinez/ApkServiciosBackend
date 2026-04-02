@@ -74,17 +74,12 @@ public class NotificarVencimientosService implements NotificarVencimientosUseCas
          NotificacionRequest request = construirRequest(telefono, tipo, row.clienteNombre(), row.servicioNombre(),
                row.fechaFin());
 
-         // 7. Intentar crear un log en base de datos para no enviar mensajes duplicados
-         return notificacionLogPort.tryCreate(row.perfilId(), tipo, CANAL_WHATSAPP, Instant.now(clock))
-               .flatMap(created -> {
-                  if (!created) {
-                     return Mono.empty();
-                  }
-
-                  return notificacionPort
-                        .enviar(request)
-                        .flatMap(providerMessageId -> notificacionLogPort.setProviderMessageId(row.perfilId(), tipo,
-                              CANAL_WHATSAPP, providerMessageId));
+         // 7. Enviar mensaje siempre (se ha eliminado la lógica de prevención de duplicados)
+         return notificacionPort.enviar(request)
+               .flatMap(providerMessageId -> {
+                  log.info("Recordatorio automático enviado a perfilId={}", row.perfilId());
+                  return notificacionLogPort.tryCreate(row.perfilId(), tipo, CANAL_WHATSAPP, Instant.now(clock))
+                        .then(notificacionLogPort.setProviderMessageId(row.perfilId(), tipo, CANAL_WHATSAPP, providerMessageId));
                });
       }, 8).then();
    }
