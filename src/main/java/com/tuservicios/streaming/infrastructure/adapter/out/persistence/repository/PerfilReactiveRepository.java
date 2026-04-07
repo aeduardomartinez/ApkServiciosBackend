@@ -16,6 +16,44 @@ public interface PerfilReactiveRepository extends R2dbcRepository<PerfilEntity, 
 
    Flux<PerfilEntity> findByCuentaId(Long cuentaId);
 
+   /**
+    * Trae los perfiles de una cuenta calculando el estado en tiempo real:
+    * - LIBRE  → sin cliente asignado
+    * - VENCIDO → fecha_fin < hoy
+    * - ACTIVO  → tiene cliente y no ha vencido
+    */
+   @Query("""
+         SELECT id_perfil, cuenta_id,
+                cliente_id, nombre_cliente, telefono_cliente,
+                fecha_inicio, fecha_fin,
+                CASE
+                  WHEN nombre_cliente IS NULL OR nombre_cliente = '' THEN 'LIBRE'
+                  WHEN fecha_fin < CURRENT_DATE                       THEN 'VENCIDO'
+                  ELSE 'ACTIVO'
+                END AS estado
+         FROM perfiles
+         WHERE cuenta_id = :cuentaId
+         ORDER BY id_perfil ASC
+         """)
+   Flux<PerfilEntity> findByCuentaIdConEstadoDinamico(Long cuentaId);
+
+   /**
+    * Igual pero para todas las cuentas (cuando no se filtra por servicio).
+    */
+   @Query("""
+         SELECT id_perfil, cuenta_id,
+                cliente_id, nombre_cliente, telefono_cliente,
+                fecha_inicio, fecha_fin,
+                CASE
+                  WHEN nombre_cliente IS NULL OR nombre_cliente = '' THEN 'LIBRE'
+                  WHEN fecha_fin < CURRENT_DATE                       THEN 'VENCIDO'
+                  ELSE 'ACTIVO'
+                END AS estado
+         FROM perfiles
+         ORDER BY id_perfil ASC
+         """)
+   Flux<PerfilEntity> findAllConEstadoDinamico();
+
    // Buscar primer perfil libre
    Mono<PerfilEntity> findFirstByCuentaIdAndEstadoOrderByIdPerfilAsc(Long cuentaId, String estado);
 
