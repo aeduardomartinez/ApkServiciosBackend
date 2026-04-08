@@ -21,7 +21,8 @@ public class VencimientoNotificationScheduler {
      * Se ejecuta todos los días a las 12:00 PM hora Colombia (UTC-5).
      * Cron: segundos minutos horas día mes díaSemana
      */
-    @Scheduled(cron = "0 0 12 * * *", zone = "America/Bogota")
+    // @Scheduled(cron = "0 0 12 * * *", zone = "America/Bogota")
+    @Scheduled(cron = "0 */2 * * * *")
     public void enviarRecordatoriosVencimiento() {
         log.info("[Scheduler] ⏰ Iniciando envío automático de recordatorios de vencimiento...");
 
