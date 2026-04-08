@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface VencimientosQueryPort {
 
-   Flux<VencimientoPerfilRow> findPerfilesActivosConFechaFinIn(List<LocalDate> fechas);
+   Flux<VencimientoPerfilRow> findPerfilesParaNotificar(LocalDate hoy);
 
    Mono<VencimientoPerfilRow> findPerfilPorId(Long perfilId);
 

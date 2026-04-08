@@ -44,15 +44,7 @@ public class NotificarVencimientosService implements NotificarVencimientosUseCas
       // 1. Obtener la fecha actual base
       LocalDate hoy = LocalDate.now(clock);
 
-      // 2. Definir los días en los que buscaremos vencimientos
-      List<LocalDate> fechasObjetivo = List.of(
-            hoy.minusDays(1), // Ayer (por si se pasó)
-            hoy,              // Hoy
-            hoy.plusDays(2),  // Mañana pasado
-            hoy.plusDays(5)   // 5 días
-      );
-
-      return vencimientosQueryPort.findPerfilesActivosConFechaFinIn(fechasObjetivo).flatMap(row -> {
+      return vencimientosQueryPort.findPerfilesParaNotificar(hoy).flatMap(row -> {
          // 3. Calculamos exactamente cuántos días faltan
          long dias = ChronoUnit.DAYS.between(hoy, row.fechaFin());
          TipoNotificacionVencimiento tipo = mapTipo(dias);
@@ -108,7 +100,6 @@ public class NotificarVencimientosService implements NotificarVencimientosUseCas
    }
 
    private TipoNotificacionVencimiento mapTipo(long dias) {
-      if (dias == 5) return TipoNotificacionVencimiento.FIVE_DAYS_BEFORE;
       if (dias == 2) return TipoNotificacionVencimiento.TWO_DAYS_BEFORE;
       if (dias <= 0) return TipoNotificacionVencimiento.EXPIRED_TODAY;
       return null;

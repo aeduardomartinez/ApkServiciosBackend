@@ -17,8 +17,7 @@ public class VencimientosQueryAdapter implements VencimientosQueryPort {
   private final DatabaseClient db;
 
   @Override
-  public Flux<VencimientoPerfilRow> findPerfilesActivosConFechaFinIn(List<LocalDate> fechas) {
-    LocalDate[] fechasArray = fechas.toArray(LocalDate[]::new);
+  public Flux<VencimientoPerfilRow> findPerfilesParaNotificar(LocalDate hoy) {
 
     return db.sql("""
         SELECT
@@ -31,10 +30,11 @@ public class VencimientosQueryAdapter implements VencimientosQueryPort {
         LEFT JOIN cuentas c ON c.id = p.cuenta_id
         LEFT JOIN servicios s ON s.id = c.servicio_id
         LEFT JOIN clientes cte ON cte.id = p.cliente_id
-        WHERE p.estado = 'ACTIVO'
-          AND p.fecha_fin = ANY($1)
+        WHERE p.estado != 'LIBRE'
+          AND (p.fecha_fin = $2 OR p.fecha_fin <= $1)
         """)
-        .bind(0, fechasArray)
+        .bind(0, hoy)
+        .bind(1, hoy.plusDays(2))
         .map((row, meta) -> new VencimientoPerfilRow(
             row.get("perfil_id", Long.class),
             row.get("fecha_fin", LocalDate.class),
