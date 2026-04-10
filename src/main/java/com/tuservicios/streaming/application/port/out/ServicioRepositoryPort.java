@@ -18,6 +18,6 @@ public interface ServicioRepositoryPort {
 
    Mono<Servicio> save(Servicio servicio);
 
-
+   Mono<Void> deleteById(Long id);
 
 }

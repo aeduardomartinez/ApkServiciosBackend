@@ -37,4 +37,9 @@ public class ServiciosService implements ServiciosUseCase {
    public Mono<Servicio> obtenerServicio(Long id) {
       return repo.findById(id);
    }
-}
+
+   @Override
+   public Mono<Void> eliminarServicio(Long id) {
+      return repo.deleteById(id);
+   }
+}

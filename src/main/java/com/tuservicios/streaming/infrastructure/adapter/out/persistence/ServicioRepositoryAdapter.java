@@ -66,4 +66,9 @@ public class ServicioRepositoryAdapter implements ServicioRepositoryPort {
 
       return repo.findById(id).map(mapper::toDomain).switchIfEmpty(Mono.error(new ServicioNotFoundException("Servicio con id " + id + " no encontrado")));
    }
+
+   @Override
+   public Mono<Void> deleteById(Long id) {
+      return repo.deleteById(id);
+   }
 }

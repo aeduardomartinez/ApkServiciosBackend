@@ -61,6 +61,7 @@ public interface PerfilReactiveRepository extends R2dbcRepository<PerfilEntity, 
          SELECT * FROM perfiles 
          WHERE LOWER(nombre_cliente) LIKE LOWER(CONCAT('%', :nombre, '%'))
          AND nombre_cliente IS NOT NULL
+         ORDER BY nombre_cliente ASC
          """)
    Flux<PerfilEntity> findByNombreClienteContaining(String nombre);
 

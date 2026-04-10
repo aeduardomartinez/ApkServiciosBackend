@@ -9,4 +9,5 @@ public interface ServiciosUseCase {
    Mono<Servicio> crearServicio(Servicio servicio);
    Flux<Servicio> listarServicios();              // todos
    Mono<Servicio> obtenerServicio(Long id);
+   Mono<Void> eliminarServicio(Long id);
 }

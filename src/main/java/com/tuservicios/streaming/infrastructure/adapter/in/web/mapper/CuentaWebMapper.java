@@ -24,6 +24,7 @@ public class CuentaWebMapper {
             c.getServicio().getId(),
             c.getServicio().getNombreServicio(),
             c.getCorreoPrincipal(),
+            c.getClave(),
             c.getFechaInicio(),
             c.getFechaFin(),
             c.getPerfiles().stream()

@@ -22,8 +22,10 @@ public class CuentaEntity  {
 
    private Long servicioId;
 
+   @org.springframework.data.relational.core.mapping.Column("clave")
    private String clave;
 
+   @org.springframework.data.relational.core.mapping.Column("correo_principal")
    private String correoPrincipal;
 
    private LocalDate fechaInicio;
