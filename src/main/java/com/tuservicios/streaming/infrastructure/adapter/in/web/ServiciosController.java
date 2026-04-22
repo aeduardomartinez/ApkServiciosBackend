@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 import com.tuservicios.streaming.application.port.in.ServiciosUseCase;
 import com.tuservicios.streaming.domain.model.Servicio;
@@ -59,5 +60,11 @@ public class ServiciosController {
    @GetMapping("/{id}")
    public Mono<ServicioListItemResponse> obtenerServicio(@PathVariable Long id) {
       return serviciosUseCase.obtenerServicio(id).map(webMapper::toListItem);
+   }
+
+   @DeleteMapping("/{id}")
+   @ResponseStatus(HttpStatus.NO_CONTENT)
+   public Mono<Void> eliminarServicio(@PathVariable Long id) {
+      return serviciosUseCase.eliminarServicio(id);
    }
 }
