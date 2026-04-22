@@ -14,6 +14,9 @@ import com.tuservicios.streaming.infrastructure.adapter.out.persistence.entity.C
 import com.tuservicios.streaming.infrastructure.adapter.out.persistence.entity.PerfilEntity;
 import com.tuservicios.streaming.infrastructure.adapter.out.persistence.repository.CuentaReactiveRepository;
 import com.tuservicios.streaming.infrastructure.adapter.out.persistence.repository.PerfilReactiveRepository;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
@@ -96,14 +99,27 @@ public class CuentaRepositoryAdapter implements CuentaRepositoryPort {
 
    @Override
    public Flux<Cuenta> findAll() {
+      log.debug("Listando TODAS las cuentas optimizado (3 queries max)...");
 
-      log.debug("Listando todas las cuentas");
+      Mono<Map<Long, com.tuservicios.streaming.domain.model.Servicio>> serviciosMapMono = servicioRepo.findAll().collectMap(com.tuservicios.streaming.domain.model.Servicio::getId);
+      Mono<Map<Long, List<PerfilEntity>>> perfilesMapMono = perfilRepo.findAllConEstadoDinamico().collectList()
+            .map(list -> list.stream().collect(Collectors.groupingBy(PerfilEntity::getCuentaId)));
+      
+      Mono<List<CuentaEntity>> cuentasListMono = cuentaRepo.findAll().collectList();
 
-      return cuentaRepo
-            .findAll()
-            .map(CuentaEntity::getId)
-            .flatMap(this::loadAggregate)
-            .doOnComplete(() -> log.debug("Listado de cuentas completado"));
+      return Mono.zip(cuentasListMono, serviciosMapMono, perfilesMapMono)
+            .flatMapMany(tuple -> {
+               List<CuentaEntity> cuentas = tuple.getT1();
+               Map<Long, com.tuservicios.streaming.domain.model.Servicio> servicios = tuple.getT2();
+               Map<Long, List<PerfilEntity>> perfiles = tuple.getT3();
+
+               return Flux.fromIterable(cuentas).map(cEntity -> {
+                  com.tuservicios.streaming.domain.model.Servicio s = servicios.get(cEntity.getServicioId());
+                  List<PerfilEntity> p = perfiles.getOrDefault(cEntity.getId(), List.of());
+                  return mapper.toDomain(cEntity, s, p);
+               });
+            })
+            .doOnComplete(() -> log.debug("Listado masivo completado velozmente."));
    }
 
    private Mono<Cuenta> loadAggregate(Long cuentaId) {
