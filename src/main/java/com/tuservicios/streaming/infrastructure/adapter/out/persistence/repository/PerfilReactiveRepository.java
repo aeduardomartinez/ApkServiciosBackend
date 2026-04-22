@@ -28,7 +28,7 @@ public interface PerfilReactiveRepository extends R2dbcRepository<PerfilEntity, 
                 fecha_inicio, fecha_fin,
                 CASE
                   WHEN nombre_cliente IS NULL OR nombre_cliente = '' THEN 'LIBRE'
-                  WHEN fecha_fin < CURRENT_DATE                       THEN 'VENCIDO'
+                  WHEN fecha_fin < (now() AT TIME ZONE 'America/Bogota')::date THEN 'VENCIDO'
                   ELSE 'ACTIVO'
                 END AS estado
          FROM perfiles
@@ -46,7 +46,7 @@ public interface PerfilReactiveRepository extends R2dbcRepository<PerfilEntity, 
                 fecha_inicio, fecha_fin,
                 CASE
                   WHEN nombre_cliente IS NULL OR nombre_cliente = '' THEN 'LIBRE'
-                  WHEN fecha_fin < CURRENT_DATE                       THEN 'VENCIDO'
+                  WHEN fecha_fin < (now() AT TIME ZONE 'America/Bogota')::date THEN 'VENCIDO'
                   ELSE 'ACTIVO'
                 END AS estado
          FROM perfiles
@@ -88,7 +88,7 @@ public interface PerfilReactiveRepository extends R2dbcRepository<PerfilEntity, 
         telefono_cliente = :telefono,
         fecha_inicio     = :fechaInicio,
         fecha_fin        = :fechaFin,
-        estado           = CASE WHEN :fechaFin < CURRENT_DATE THEN 'VENCIDO' ELSE 'ACTIVO' END
+        estado           = CASE WHEN :fechaFin < (now() AT TIME ZONE 'America/Bogota')::date THEN 'VENCIDO' ELSE 'ACTIVO' END
     WHERE cuenta_id  = :cuentaId
       AND id_perfil  = :perfilId
       AND estado     = 'LIBRE'
@@ -104,7 +104,7 @@ public interface PerfilReactiveRepository extends R2dbcRepository<PerfilEntity, 
         telefono_cliente = :telefono,
         fecha_inicio     = :fechaInicio,
         fecha_fin        = :fechaFin,
-        estado           = CASE WHEN :fechaFin < CURRENT_DATE THEN 'VENCIDO' ELSE 'ACTIVO' END
+        estado           = CASE WHEN :fechaFin < (now() AT TIME ZONE 'America/Bogota')::date THEN 'VENCIDO' ELSE 'ACTIVO' END
     WHERE cuenta_id = :cuentaId
       AND id_perfil = :perfilId
     """)
