@@ -57,8 +57,6 @@ public class ServicioRepositoryAdapter implements ServicioRepositoryPort {
 
    @Override
    public Mono<Servicio> findRawById(Long id) {
-//      return repo.findById(String.valueOf(id)) // Este es el ReactiveCrudRepository
-//                 .map(mapper::toDomain);
       return repo.findById(id).map(mapper::toDomain);
    }
    @Override

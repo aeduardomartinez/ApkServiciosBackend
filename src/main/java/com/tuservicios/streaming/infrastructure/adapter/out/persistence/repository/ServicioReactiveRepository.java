@@ -10,9 +10,8 @@ import reactor.core.publisher.Mono;
 
 @Repository
 public interface ServicioReactiveRepository
-      extends R2dbcRepository<ServiciosEntity, String> {
+      extends R2dbcRepository<ServiciosEntity, Long> {
 
-   Mono<ServiciosEntity> findById(Long id);
    Mono<ServiciosEntity> findByNombre(String nombre);
 
 }
