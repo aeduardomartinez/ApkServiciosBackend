@@ -155,9 +155,8 @@ public class CuentaRepositoryAdapter implements CuentaRepositoryPort {
 
    @Override
    public Mono<Void> deleteById(Long id) {
-      log.info("Borrando cuenta {} y sus perfiles...", id);
-      return perfilRepo.deleteByCuentaId(id)
-                       .then(cuentaRepo.deleteById(id));
+      log.info("Borrando cuenta maestra id={}", id);
+      return cuentaRepo.deleteById(id);
    }
 
    @Override
