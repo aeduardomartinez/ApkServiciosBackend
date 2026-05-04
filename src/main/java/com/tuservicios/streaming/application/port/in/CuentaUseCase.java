@@ -2,7 +2,6 @@ package com.tuservicios.streaming.application.port.in;
 
 import java.time.LocalDate;
 
-import com.tuservicios.streaming.domain.model.Cliente;
 import com.tuservicios.streaming.domain.model.Cuenta;
 
 import reactor.core.publisher.Flux;
@@ -23,12 +22,11 @@ public interface CuentaUseCase {
    /**
     * Requerimiento 3: Asocia un nuevo cliente a un cupo disponible en la cuenta.
     */
-   // CuentaUseCase.java — cambiar firma de asociarUsuario
    Mono<Cuenta> asociarUsuario(Long cuentaId, Long clienteId, LocalDate fechaInicio, LocalDate fechaFin);
+
    /**
     * Requerimiento 4: Edita la información de un usuario ya asociado.
     */
-
    Mono<Cuenta> editarPerfil(Long cuentaId, Long perfilId,
          Long clienteId,
          LocalDate fechaInicio, LocalDate fechaFin);

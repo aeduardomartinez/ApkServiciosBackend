@@ -5,7 +5,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import com.tuservicios.streaming.application.port.in.CuentaUseCase;
-import com.tuservicios.streaming.domain.model.Cliente;
 import com.tuservicios.streaming.infrastructure.adapter.in.web.dto.ActualizarCorreoRequest;
 import com.tuservicios.streaming.infrastructure.adapter.in.web.dto.CuentaRequest;
 import com.tuservicios.streaming.infrastructure.adapter.in.web.dto.PerfilRequest;
