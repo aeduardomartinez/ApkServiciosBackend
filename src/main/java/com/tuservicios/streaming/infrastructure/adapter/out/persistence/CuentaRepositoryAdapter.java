@@ -153,4 +153,20 @@ public class CuentaRepositoryAdapter implements CuentaRepositoryPort {
                        .map(CuentaEntity::getId).flatMap(this::loadAggregate);
    }
 
+   @Override
+   public Mono<Void> deleteById(Long id) {
+      log.info("Borrando cuenta {} y sus perfiles...", id);
+      return perfilRepo.deleteByCuentaId(id)
+                       .then(cuentaRepo.deleteById(id));
+   }
+
+   @Override
+   public Mono<Void> actualizarCorreo(Long cuentaId, String nuevoCorreo) {
+      log.info("Actualizando correo de cuenta {} → {}", cuentaId, nuevoCorreo);
+      return cuentaRepo.updateCorreoPrincipal(cuentaId, nuevoCorreo)
+                       .flatMap(rows -> rows == 1
+                             ? Mono.<Void>empty()
+                             : Mono.error(new com.tuservicios.streaming.domain.exception.CuentaNoEncontradaException(
+                                   "Cuenta con ID " + cuentaId + " no encontrada")));
+   }
 }

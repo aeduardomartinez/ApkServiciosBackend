@@ -46,4 +46,11 @@ public interface CuentaUseCase {
    Flux<Cuenta> buscarPorNombreCliente(String nombre);
 
    Flux<Cuenta> listarCuentas(Long servicio);
+
+   Mono<Void> eliminarCuenta(Long cuentaId);
+
+   /**
+    * Actualiza el correo principal de una cuenta.
+    */
+   Mono<Cuenta> actualizarCorreo(Long cuentaId, String nuevoCorreo);
 }

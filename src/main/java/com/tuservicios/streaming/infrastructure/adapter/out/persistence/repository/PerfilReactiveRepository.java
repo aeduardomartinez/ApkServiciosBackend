@@ -117,4 +117,6 @@ public interface PerfilReactiveRepository extends R2dbcRepository<PerfilEntity, 
 
    Mono<Boolean> existsByCuentaId(Long cuentaId);
 
+   Mono<Void> deleteByCuentaId(Long cuentaId);
+
 }

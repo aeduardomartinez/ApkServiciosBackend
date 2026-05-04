@@ -29,4 +29,8 @@ public interface CuentaRepositoryPort {
 
    Flux<Cuenta> findByServicioId(Long servicioId);
 
+   Mono<Void> deleteById(Long id);
+
+   Mono<Void> actualizarCorreo(Long cuentaId, String nuevoCorreo);
+
 }

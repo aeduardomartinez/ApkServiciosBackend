@@ -235,5 +235,19 @@ public class CuentaService implements CuentaUseCase {
       return cuentaRepo.findByServicioId(servicio);
    }
 
+   @Override
+   public Mono<Void> eliminarCuenta(Long cuentaId) {
+      log.info("Eliminando cuenta maestra: {}", cuentaId);
+      return inTx(cuentaRepo.deleteById(cuentaId));
+   }
+
+   @Override
+   public Mono<Cuenta> actualizarCorreo(Long cuentaId, String nuevoCorreo) {
+      log.info("Actualizando correo de cuenta {} → {}", cuentaId, nuevoCorreo);
+      return inTx(
+            cuentaRepo.actualizarCorreo(cuentaId, nuevoCorreo)
+                      .then(cuentaRepo.findById(cuentaId))
+      );
+   }
 
 }

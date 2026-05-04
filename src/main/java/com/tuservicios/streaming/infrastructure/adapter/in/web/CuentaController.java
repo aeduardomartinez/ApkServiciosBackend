@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.tuservicios.streaming.application.port.in.CuentaUseCase;
 import com.tuservicios.streaming.domain.model.Cliente;
+import com.tuservicios.streaming.infrastructure.adapter.in.web.dto.ActualizarCorreoRequest;
 import com.tuservicios.streaming.infrastructure.adapter.in.web.dto.CuentaRequest;
 import com.tuservicios.streaming.infrastructure.adapter.in.web.dto.PerfilRequest;
 import com.tuservicios.streaming.infrastructure.adapter.in.web.dto.response.CuentaResponse;
@@ -106,5 +107,22 @@ public class CuentaController {
       log.info("REST: Listar cuentas servicio={}", servicio);
 
       return cuentaUseCase.listarCuentas(servicio).map(mapper::toResponse);
+   }
+
+   @DeleteMapping("/{id}")
+   @ResponseStatus(HttpStatus.NO_CONTENT)
+   public Mono<Void> eliminarCuenta(@PathVariable Long id) {
+      log.info("REST: Eliminar cuenta id={}", id);
+      return cuentaUseCase.eliminarCuenta(id);
+   }
+
+   @PatchMapping("/{id}/correo")
+   @ResponseStatus(HttpStatus.OK)
+   public Mono<CuentaResponse> actualizarCorreo(
+         @PathVariable Long id,
+         @Valid @RequestBody ActualizarCorreoRequest request) {
+      log.info("REST: Actualizar correo cuentaId={} → {}", id, request.correo());
+      return cuentaUseCase.actualizarCorreo(id, request.correo())
+                          .map(mapper::toResponse);
    }
 }
