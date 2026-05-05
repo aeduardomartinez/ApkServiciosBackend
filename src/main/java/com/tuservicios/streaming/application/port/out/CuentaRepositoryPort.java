@@ -33,4 +33,6 @@ public interface CuentaRepositoryPort {
 
    Mono<Void> actualizarCorreo(Long cuentaId, String nuevoCorreo);
 
+   Mono<Void> actualizarClave(Long cuentaId, String nuevaClave);
+
 }

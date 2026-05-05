@@ -51,4 +51,9 @@ public interface CuentaUseCase {
     * Actualiza el correo principal de una cuenta.
     */
    Mono<Cuenta> actualizarCorreo(Long cuentaId, String nuevoCorreo);
+
+   /**
+    * Actualiza la clave principal de una cuenta.
+    */
+   Mono<Cuenta> actualizarClave(Long cuentaId, String nuevaClave);
 }

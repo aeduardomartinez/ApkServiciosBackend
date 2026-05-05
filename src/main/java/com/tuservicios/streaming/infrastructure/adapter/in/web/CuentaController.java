@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import com.tuservicios.streaming.application.port.in.CuentaUseCase;
+import com.tuservicios.streaming.infrastructure.adapter.in.web.dto.ActualizarClaveRequest;
 import com.tuservicios.streaming.infrastructure.adapter.in.web.dto.ActualizarCorreoRequest;
 import com.tuservicios.streaming.infrastructure.adapter.in.web.dto.CuentaRequest;
 import com.tuservicios.streaming.infrastructure.adapter.in.web.dto.PerfilRequest;
@@ -122,6 +123,16 @@ public class CuentaController {
          @Valid @RequestBody ActualizarCorreoRequest request) {
       log.info("REST: Actualizar correo cuentaId={} → {}", id, request.correo());
       return cuentaUseCase.actualizarCorreo(id, request.correo())
+                          .map(mapper::toResponse);
+   }
+
+   @PatchMapping("/{id}/clave")
+   @ResponseStatus(HttpStatus.OK)
+   public Mono<CuentaResponse> actualizarClave(
+         @PathVariable Long id,
+         @Valid @RequestBody ActualizarClaveRequest request) {
+      log.info("REST: Actualizar clave cuentaId={} → ****", id);
+      return cuentaUseCase.actualizarClave(id, request.clave())
                           .map(mapper::toResponse);
    }
 }

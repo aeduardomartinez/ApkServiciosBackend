@@ -168,4 +168,14 @@ public class CuentaRepositoryAdapter implements CuentaRepositoryPort {
                              : Mono.error(new com.tuservicios.streaming.domain.exception.CuentaNoEncontradaException(
                                    "Cuenta con ID " + cuentaId + " no encontrada")));
    }
+
+   @Override
+   public Mono<Void> actualizarClave(Long cuentaId, String nuevaClave) {
+      log.info("Actualizando clave de cuenta {} → {}", cuentaId, nuevaClave);
+      return cuentaRepo.updateClavePrincipal(cuentaId, nuevaClave)
+                       .flatMap(rows -> rows == 1
+                             ? Mono.<Void>empty()
+                             : Mono.error(new com.tuservicios.streaming.domain.exception.CuentaNoEncontradaException(
+                                   "Cuenta con ID " + cuentaId + " no encontrada")));
+   }
 }

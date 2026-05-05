@@ -250,4 +250,13 @@ public class CuentaService implements CuentaUseCase {
       );
    }
 
+   @Override
+   public Mono<Cuenta> actualizarClave(Long cuentaId, String nuevaClave) {
+      log.info("Actualizando clave de cuenta {} → {}", cuentaId, nuevaClave);
+      return inTx(
+            cuentaRepo.actualizarClave(cuentaId, nuevaClave)
+                      .then(cuentaRepo.findById(cuentaId))
+      );
+   }
+
 }
