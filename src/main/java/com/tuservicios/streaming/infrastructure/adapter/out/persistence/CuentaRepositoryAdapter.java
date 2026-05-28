@@ -140,10 +140,9 @@ public class CuentaRepositoryAdapter implements CuentaRepositoryPort {
       return cuentaRepo
             .findById(cuentaId)
             .switchIfEmpty(Mono.error(new CuentaNoEncontradaException("Cuenta con ID " + cuentaId + " no encontrada")))
-            .flatMap(cuentaEntity -> Mono
-                   .zip(servicioRepo.findById(cuentaEntity.getServicioId()),
-                        perfilRepo.findByCuentaIdConEstadoDinamico(cuentaId).collectList())
-                   .map(tuple -> mapper.toDomain(cuentaEntity, tuple.getT1(), tuple.getT2())));
+            .flatMap(cuentaEntity -> servicioRepo.findById(cuentaEntity.getServicioId())
+                   .flatMap(servicio -> perfilRepo.findByCuentaIdConEstadoDinamico(cuentaId).collectList()
+                         .map(perfiles -> mapper.toDomain(cuentaEntity, servicio, perfiles))));
    }
 
    @Override
