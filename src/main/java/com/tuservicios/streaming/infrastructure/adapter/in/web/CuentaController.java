@@ -58,9 +58,18 @@ public class CuentaController {
       log.info("REST: Asociar clienteId={} a cuenta={}", request.clienteId(), cuentaId);
 
       return cuentaUseCase
-            .asociarUsuario(cuentaId, request.clienteId(), request.fechaInicio(), request.fechaFin())
+            .asociarUsuario(cuentaId, request.clienteId(), request.fechaInicio(), request.fechaFin(), request.correoExtra(), request.claveExtra())
             .map(mapper::toResponse)
             .doOnSuccess(res -> log.info("REST: Cliente asignado en cuenta={}", res.id()));
+   }
+
+   @PostMapping("/{cuentaId}/cupos-extra")
+   @ResponseStatus(HttpStatus.OK)
+   public Mono<CuentaResponse> agregarCupoExtra(@PathVariable Long cuentaId) {
+      log.info("REST: Agregar cupo extra a cuentaId={}", cuentaId);
+      return cuentaUseCase.agregarCupoExtra(cuentaId)
+            .map(mapper::toResponse)
+            .doOnSuccess(res -> log.info("REST: Cupo extra agregado a cuenta={}", res.id()));
    }
 
    @PutMapping("/{cuentaId}/perfiles/{perfilId}")
@@ -74,7 +83,7 @@ public class CuentaController {
             perfilId, cuentaId, request.clienteId());
 
       return cuentaUseCase
-            .editarPerfil(cuentaId, perfilId, request.clienteId(), request.fechaInicio(), request.fechaFin())
+            .editarPerfil(cuentaId, perfilId, request.clienteId(), request.fechaInicio(), request.fechaFin(), request.correoExtra(), request.claveExtra())
             .map(mapper::toResponse);
    }
 

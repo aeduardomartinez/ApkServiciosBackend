@@ -27,7 +27,15 @@ public record ServicioRequest (
 
       @NotNull(message = "El valor es obligatorio")
       @DecimalMin(value = "0.0", inclusive = false)
-      double valorPerfil
+      double valorPerfil,
+
+      @NotNull(message = "El costo del perfil extra es obligatorio")
+      @Min(value = 0, message = "No puede ser negativo")
+      double costoPerfilExtra,
+
+      @NotNull(message = "El valor del perfil extra es obligatorio")
+      @Min(value = 0, message = "No puede ser negativo")
+      double valorPerfilExtra
 )
 
 {

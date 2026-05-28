@@ -20,43 +20,45 @@ public class FinanzasService implements FinanzasUseCase {
     @Override
     public Mono<FinanzasResumenResponse> calcularFinanzasGlobales() {
         return cuentaRepositoryPort.findAll()
-                .collectList()
-                .map(cuentas -> {
-                    double totalIngresos = 0;
-                    double totalCostos = 0;
-                    int cuentasActivas = 0;
-                    int perfilesActivos = 0;
-                    int perfilesLibres = 0;
+                .reduce(
+                        new FinanzasResumenResponse(0, 0, 0, 0, 0, 0),
+                        (acc, cuenta) -> {
+                            double totalCostos = acc.getCostoTotalMensual() + cuenta.getServicio().getValorBase() 
+                                               + (cuenta.getCuposExtraContratados() * cuenta.getServicio().getCostoPerfilExtra());
+                            
+                            double totalIngresos = acc.getIngresoTotalMensual();
+                            int perfilesActivos = acc.getTotalPerfilesActivos();
+                            int perfilesLibres = acc.getTotalPerfilesLibres();
 
-                    for (Cuenta cuenta : cuentas) {
-                        cuentasActivas++;
-                        // El costo de la cuenta es su valor base
-                        totalCostos += cuenta.getServicio().getValorBase();
+                            int maxPerfilesBase = cuenta.getServicio().getMaxPerfilesBase();
+                            double valorPerfilBase = cuenta.getServicio().getValorPerfil();
+                            double valorPerfilExtra = cuenta.getServicio().getValorPerfilExtra();
 
-                        // Contar los perfiles
-                        long activosEnCuenta = cuenta.getPerfiles().stream()
-                                .filter(p -> p.getEstado() == EstadoPerfil.ACTIVO)
-                                .count();
-                        
-                        long libresEnCuenta = cuenta.getPerfiles().stream()
-                                .filter(p -> p.getEstado() == EstadoPerfil.LIBRE)
-                                .count();
+                            var perfiles = cuenta.getPerfiles();
+                            for (int i = 0; i < perfiles.size(); i++) {
+                                var p = perfiles.get(i);
+                                if (p.getEstado() == EstadoPerfil.ACTIVO) {
+                                    perfilesActivos++;
+                                    if (i < maxPerfilesBase) {
+                                        totalIngresos += valorPerfilBase;
+                                    } else {
+                                        totalIngresos += valorPerfilExtra;
+                                    }
+                                } else if (p.getEstado() == EstadoPerfil.LIBRE) {
+                                    perfilesLibres++;
+                                }
+                            }
 
-                        perfilesActivos += activosEnCuenta;
-                        perfilesLibres += libresEnCuenta;
+                            acc.setIngresoTotalMensual(totalIngresos);
+                            acc.setCostoTotalMensual(totalCostos);
+                            acc.setGananciaNetaMensual(totalIngresos - totalCostos);
+                            acc.setTotalCuentas(acc.getTotalCuentas() + 1);
+                            acc.setTotalPerfilesActivos(perfilesActivos);
+                            acc.setTotalPerfilesLibres(perfilesLibres);
 
-                        // Los ingresos de esta cuenta son (activos * valor_perfil)
-                        totalIngresos += (activosEnCuenta * cuenta.getServicio().getValorPerfil());
-                    }
-
-                    return FinanzasResumenResponse.builder()
-                            .ingresoTotalMensual(totalIngresos)
-                            .costoTotalMensual(totalCostos)
-                            .gananciaNetaMensual(totalIngresos - totalCostos)
-                            .totalCuentas(cuentasActivas)
-                            .totalPerfilesActivos(perfilesActivos)
-                            .totalPerfilesLibres(perfilesLibres)
-                            .build();
-                });
+                            return acc;
+                        }
+                )
+                .defaultIfEmpty(new FinanzasResumenResponse(0, 0, 0, 0, 0, 0));
     }
 }

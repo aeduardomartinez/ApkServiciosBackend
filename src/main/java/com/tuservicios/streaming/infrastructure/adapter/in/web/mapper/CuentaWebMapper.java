@@ -9,6 +9,9 @@ import com.tuservicios.streaming.infrastructure.adapter.in.web.dto.CuentaRequest
 import com.tuservicios.streaming.infrastructure.adapter.in.web.dto.response.CuentaResponse;
 import com.tuservicios.streaming.infrastructure.adapter.in.web.dto.response.PerfilResponse;
 
+import java.util.List;
+import java.util.stream.IntStream;
+
 @Component
 public class CuentaWebMapper {
 
@@ -27,13 +30,20 @@ public class CuentaWebMapper {
             c.getClave(),
             c.getFechaInicio(),
             c.getFechaFin(),
-            c.getPerfiles().stream()
-             .map(this::toPerfilResponse)
-             .toList()
+            mapPerfiles(c)
       );
    }
 
-   private PerfilResponse toPerfilResponse(PerfilCuenta p) {
+   private List<PerfilResponse> mapPerfiles(Cuenta c) {
+      int maxBase = c.getServicio().getMaxPerfilesBase();
+      var perfiles = c.getPerfiles();
+      
+      return IntStream.range(0, perfiles.size())
+            .mapToObj(i -> toPerfilResponse(perfiles.get(i), i >= maxBase))
+            .toList();
+   }
+
+   private PerfilResponse toPerfilResponse(PerfilCuenta p, boolean isExtra) {
       Cliente cliente = p.getCliente();
 
       return new PerfilResponse(
@@ -43,7 +53,10 @@ public class CuentaWebMapper {
             cliente != null ? cliente.telefono() : null,
             p.getFechaInicio(),
             p.getFechaFin(),
-            p.getEstado().name()
+            p.getEstado().name(),
+            isExtra,
+            p.getCorreoExtra(),
+            p.getClaveExtra()
       );
    }
 }

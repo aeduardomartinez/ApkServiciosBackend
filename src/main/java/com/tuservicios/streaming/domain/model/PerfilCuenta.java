@@ -12,20 +12,24 @@ public class PerfilCuenta {
    private LocalDate  fechaInicio;  // fechas de suscripción del perfil
    private LocalDate  fechaFin;
    private EstadoPerfil estado;
+   private String correoExtra;
+   private String claveExtra;
 
    protected PerfilCuenta() {}
 
    public PerfilCuenta(Long idPerfil, Cliente cliente,
          LocalDate fechaInicio, LocalDate fechaFin,
-         EstadoPerfil estado) {
+         EstadoPerfil estado, String correoExtra, String claveExtra) {
       this.idPerfil    = idPerfil;
       this.cliente     = cliente;
       this.fechaInicio = fechaInicio;
       this.fechaFin    = fechaFin;
       this.estado      = estado;
+      this.correoExtra = correoExtra;
+      this.claveExtra  = claveExtra;
    }
 
-   public void asignar(Cliente c, LocalDate inicio, LocalDate fin) {
+   public void asignar(Cliente c, LocalDate inicio, LocalDate fin, String correoExtra, String claveExtra) {
       if (estado != EstadoPerfil.LIBRE) {
          throw new IllegalStateException("El perfil no está disponible. Estado: " + estado);
       }
@@ -33,14 +37,18 @@ public class PerfilCuenta {
       this.fechaInicio = inicio;
       this.fechaFin    = fin;
       this.estado      = determinarEstado(fin);
+      this.correoExtra = correoExtra;
+      this.claveExtra  = claveExtra;
    }
 
-   public void actualizar(Cliente c, LocalDate inicio, LocalDate fin) {
+   public void actualizar(Cliente c, LocalDate inicio, LocalDate fin, String correoExtra, String claveExtra) {
       if (c == null) throw new IllegalArgumentException("El cliente no puede ser null");
       this.cliente     = c;
       this.fechaInicio = inicio;
       this.fechaFin    = fin;
       this.estado      = determinarEstado(fin);
+      this.correoExtra = correoExtra;
+      this.claveExtra  = claveExtra;
    }
 
    public void liberar() {
@@ -48,6 +56,8 @@ public class PerfilCuenta {
       this.fechaInicio = null;
       this.fechaFin    = null;
       this.estado      = EstadoPerfil.LIBRE;
+      this.correoExtra = null;
+      this.claveExtra  = null;
    }
 
    public boolean verificarVencimiento() {

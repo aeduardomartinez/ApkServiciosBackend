@@ -5,7 +5,9 @@ CREATE TABLE IF NOT EXISTS servicios (
     max_perfiles_base INT NOT NULL,
     max_perfiles_extra INT NOT NULL,
     valor_base DECIMAL(10, 2) NOT NULL,
-    valor_perfil DECIMAL(10, 2) NOT NULL
+    valor_perfil DECIMAL(10, 2) NOT NULL,
+    costo_perfil_extra DECIMAL(10, 2) NOT NULL DEFAULT 0,
+    valor_perfil_extra DECIMAL(10, 2) NOT NULL DEFAULT 0
     );
 
 -- 2. Tabla de Cuentas
@@ -27,7 +29,9 @@ CREATE TABLE IF NOT EXISTS perfiles (
     telefono_cliente VARCHAR(20) NULL,
     fecha_inicio DATE NULL,
     fecha_fin DATE NULL,
-    estado VARCHAR(20) NULL
+    estado VARCHAR(20) NULL,
+    correo_extra VARCHAR(255) NULL,
+    clave_extra VARCHAR(100) NULL
     );
 
 CREATE TABLE IF NOT EXISTS clientes (

@@ -22,14 +22,19 @@ public interface CuentaUseCase {
    /**
     * Requerimiento 3: Asocia un nuevo cliente a un cupo disponible en la cuenta.
     */
-   Mono<Cuenta> asociarUsuario(Long cuentaId, Long clienteId, LocalDate fechaInicio, LocalDate fechaFin);
+   Mono<Cuenta> asociarUsuario(Long cuentaId, Long clienteId, LocalDate fechaInicio, LocalDate fechaFin, String correoExtra, String claveExtra);
 
    /**
     * Requerimiento 4: Edita la información de un usuario ya asociado.
     */
    Mono<Cuenta> editarPerfil(Long cuentaId, Long perfilId,
          Long clienteId,
-         LocalDate fechaInicio, LocalDate fechaFin);
+         LocalDate fechaInicio, LocalDate fechaFin, String correoExtra, String claveExtra);
+
+   /**
+    * Incrementa los cupos extras permitidos en la cuenta.
+    */
+   Mono<Cuenta> agregarCupoExtra(Long cuentaId);
 
    Flux<Cuenta> listarTodasLasCuentas();
 

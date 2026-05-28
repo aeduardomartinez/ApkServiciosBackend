@@ -57,11 +57,18 @@ public class NotificarVencimientosService implements NotificarVencimientosUseCas
          NotificacionRequest request = construirRequest(row.perfilId(), telefono, tipo, row.clienteNombre(), row.servicioNombre(),
                row.fechaFin());
 
-         // 5. Enviar mensaje directamente (sin logs/bloqueos)
+         // 5. Enviar mensaje directamente
          log.info("Auto-envío recordatorio perfilId={}, cliente={}, servicio={}", 
                row.perfilId(), row.clienteNombre(), row.servicioNombre());
-         return notificacionPort.enviar(request).then();
-      }, 8).then();
+         
+         // Use subscribeOn to offload external blocking/network calls to bounded elastic if notificacionPort is blocking,
+         // but if notificacionPort is non-blocking (WebClient), flatMap handles it natively.
+         return notificacionPort.enviar(request).onErrorResume(e -> {
+             log.error("Error enviando notificación al perfil {}: {}", row.perfilId(), e.getMessage());
+             return Mono.empty(); // Prevent a single failure from failing the entire batch
+         }).then();
+      }, 10) // Limit concurrency to 10 to avoid overwhelming the external API (e.g., WhatsApp)
+      .then();
    }
 
    @Override

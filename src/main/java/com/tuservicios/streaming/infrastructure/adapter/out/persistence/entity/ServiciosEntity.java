@@ -31,18 +31,22 @@ public class ServiciosEntity  {
    @Column("valor_base")
    BigDecimal valorBase;
 
+   @Column("valor_perfil")
    BigDecimal valorPerfil;
 
+   @Column("costo_perfil_extra")
+   BigDecimal costoPerfilExtra;
 
-
-   public ServiciosEntity(Long id, String nombre, Integer maxPerfilesBase, Integer maxPerfilesExtra, BigDecimal valorBase, BigDecimal valorPerfil
-          ) {
+   @Column("valor_perfil_extra")
+   BigDecimal valorPerfilExtra;   public ServiciosEntity(Long id, String nombre, Integer maxPerfilesBase, Integer maxPerfilesExtra, BigDecimal valorBase, BigDecimal valorPerfil, BigDecimal costoPerfilExtra, BigDecimal valorPerfilExtra) {
       this.id = id;
       this.nombre = nombre;
       this.maxPerfilesBase = maxPerfilesBase;
       this.maxPerfilesExtra = maxPerfilesExtra;
       this.valorBase = valorBase;
       this.valorPerfil = valorPerfil;
+      this.costoPerfilExtra = costoPerfilExtra;
+      this.valorPerfilExtra = valorPerfilExtra;
    }
 
    /**
@@ -53,8 +57,10 @@ public class ServiciosEntity  {
          Integer maxPerfilesBase,
          Integer maxPerfilesExtra,
          BigDecimal valorBase,
-         BigDecimal valorPerfil) {
-      return new ServiciosEntity(id, nombre, maxPerfilesBase, maxPerfilesExtra, valorBase, valorPerfil);
+         BigDecimal valorPerfil,
+         BigDecimal costoPerfilExtra,
+         BigDecimal valorPerfilExtra) {
+      return new ServiciosEntity(id, nombre, maxPerfilesBase, maxPerfilesExtra, valorBase, valorPerfil, costoPerfilExtra, valorPerfilExtra);
    }
 
 }

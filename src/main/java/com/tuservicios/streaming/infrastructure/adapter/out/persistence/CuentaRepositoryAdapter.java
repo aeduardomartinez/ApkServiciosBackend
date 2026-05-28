@@ -66,25 +66,31 @@ public class CuentaRepositoryAdapter implements CuentaRepositoryPort {
    }
 
    @Override
+   public Mono<Void> incrementarCupoExtra(Long cuentaId) {
+      return cuentaRepo.incrementarCupoExtra(cuentaId)
+            .flatMap(rows -> rows == 1 ? Mono.<Void>empty() : Mono.error(new CuentaNoEncontradaException("Cuenta no encontrada")));
+   }
+
+   @Override
    public Mono<Cuenta> findById(Long id) {
       return loadAggregate(id);
    }
 
    @Override
-   public Mono<Void> asignarClienteEnPerfilLibre(Long cuentaId, Long clienteId, Cliente cliente, LocalDate fechaInicio, LocalDate fechaFin) {
+   public Mono<Void> asignarClienteEnPerfilLibre(Long cuentaId, Long clienteId, Cliente cliente, LocalDate fechaInicio, LocalDate fechaFin, String correoExtra, String claveExtra) {
       return perfilRepo
             .findFirstByCuentaIdAndEstadoOrderByIdPerfilAsc(cuentaId, "LIBRE")
             .switchIfEmpty(Mono.error(new CuposInsuficientesException("No hay perfiles libres")))
             .flatMap(libre -> perfilRepo.asignarEnPerfil(cuentaId, libre.getIdPerfil(), clienteId, cliente.nombreCompleto(), cliente.telefono(),
-                  fechaInicio, fechaFin))
+                  fechaInicio, fechaFin, correoExtra, claveExtra))
             .flatMap(rows -> rows == 1 ? Mono.empty() : Mono.error(new IllegalStateException("Asignación fallida")));
    }
 
    @Override
    public Mono<Void> actualizarClienteEnPerfil(Long cuentaId, Long perfilId, Long clienteId, Cliente cliente, LocalDate fechaInicio,
-         LocalDate fechaFin) {
+         LocalDate fechaFin, String correoExtra, String claveExtra) {
       return expectOneRowUpdated(
-            perfilRepo.actualizarCliente(cuentaId, perfilId, clienteId, cliente.nombreCompleto(), cliente.telefono(), fechaInicio, fechaFin),
+            perfilRepo.actualizarCliente(cuentaId, perfilId, clienteId, cliente.nombreCompleto(), cliente.telefono(), fechaInicio, fechaFin, correoExtra, claveExtra),
             new PerfilNoEncontradoException(perfilId.toString()));
    }
 

@@ -42,7 +42,7 @@ public class ServiciosController {
    @PostMapping
    public Mono<ResponseEntity<ServicioResponse>> crearServicio(@RequestBody ServicioRequest r) {
 
-      Servicio servicio = Servicio.crearNuevo(r.nombreServicio(), r.maxPerfilesBase(), r.maxPerfilesExtra(), r.valorTotalCuenta(), r.valorPerfil());
+      Servicio servicio = Servicio.crearNuevo(r.nombreServicio(), r.maxPerfilesBase(), r.maxPerfilesExtra(), r.valorTotalCuenta(), r.valorPerfil(), r.costoPerfilExtra(), r.valorPerfilExtra());
 
       return serviciosUseCase.crearServicio(servicio).map(s -> {
          ServicioResponse response = new ServicioResponse(s.getId(),

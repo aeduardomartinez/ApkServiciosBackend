@@ -18,7 +18,9 @@ public class ServicioPersistenceMapper {
             e.getMaxPerfilesBase() != null ? e.getMaxPerfilesBase() : 0,
             e.getMaxPerfilesExtra() != null ? e.getMaxPerfilesExtra() : 0,
             e.getValorBase() != null ? e.getValorBase().doubleValue() : 0.0,
-            e.getValorPerfil() != null ? e.getValorPerfil().doubleValue() : 0.0
+            e.getValorPerfil() != null ? e.getValorPerfil().doubleValue() : 0.0,
+            e.getCostoPerfilExtra() != null ? e.getCostoPerfilExtra().doubleValue() : 0.0,
+            e.getValorPerfilExtra() != null ? e.getValorPerfilExtra().doubleValue() : 0.0
       );
    }
 
@@ -32,7 +34,9 @@ public class ServicioPersistenceMapper {
             s.getMaxPerfilesBase(),
             s.getMaxPerfilesExtra(),
             BigDecimal.valueOf(s.getValorBase()),
-            BigDecimal.valueOf(s.getValorPerfil())
+            BigDecimal.valueOf(s.getValorPerfil()),
+            BigDecimal.valueOf(s.getCostoPerfilExtra()),
+            BigDecimal.valueOf(s.getValorPerfilExtra())
 
       );
    }

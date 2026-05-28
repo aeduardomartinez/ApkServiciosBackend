@@ -25,7 +25,7 @@ public interface PerfilReactiveRepository extends R2dbcRepository<PerfilEntity, 
    @Query("""
          SELECT id_perfil, cuenta_id,
                 cliente_id, nombre_cliente, telefono_cliente,
-                fecha_inicio, fecha_fin,
+                fecha_inicio, fecha_fin, correo_extra, clave_extra,
                 CASE
                   WHEN nombre_cliente IS NULL OR nombre_cliente = '' THEN 'LIBRE'
                   WHEN fecha_fin < CURRENT_DATE THEN 'VENCIDO'
@@ -43,7 +43,7 @@ public interface PerfilReactiveRepository extends R2dbcRepository<PerfilEntity, 
    @Query("""
          SELECT id_perfil, cuenta_id,
                 cliente_id, nombre_cliente, telefono_cliente,
-                fecha_inicio, fecha_fin,
+                fecha_inicio, fecha_fin, correo_extra, clave_extra,
                 CASE
                   WHEN nombre_cliente IS NULL OR nombre_cliente = '' THEN 'LIBRE'
                   WHEN fecha_fin < CURRENT_DATE THEN 'VENCIDO'
@@ -75,6 +75,8 @@ public interface PerfilReactiveRepository extends R2dbcRepository<PerfilEntity, 
              telefono_cliente = NULL,
              fecha_inicio = NULL,
              fecha_fin = NULL,
+             correo_extra = NULL,
+             clave_extra = NULL,
              estado = 'LIBRE'
          WHERE cuenta_id = :cuentaId
            AND id_perfil = :perfilId
@@ -88,6 +90,8 @@ public interface PerfilReactiveRepository extends R2dbcRepository<PerfilEntity, 
         telefono_cliente = :telefono,
         fecha_inicio     = :fechaInicio,
         fecha_fin        = :fechaFin,
+        correo_extra     = :correoExtra,
+        clave_extra      = :claveExtra,
         estado           = CASE WHEN :fechaFin < CURRENT_DATE THEN 'VENCIDO' ELSE 'ACTIVO' END
     WHERE cuenta_id  = :cuentaId
       AND id_perfil  = :perfilId
@@ -95,7 +99,7 @@ public interface PerfilReactiveRepository extends R2dbcRepository<PerfilEntity, 
     """)
    Mono<Integer> asignarEnPerfil(Long cuentaId, Long perfilId,
          Long clienteId, String nombre, String telefono,
-         LocalDate fechaInicio, LocalDate fechaFin);
+         LocalDate fechaInicio, LocalDate fechaFin, String correoExtra, String claveExtra);
 
    @Query("""
     UPDATE perfiles
@@ -104,13 +108,15 @@ public interface PerfilReactiveRepository extends R2dbcRepository<PerfilEntity, 
         telefono_cliente = :telefono,
         fecha_inicio     = :fechaInicio,
         fecha_fin        = :fechaFin,
+        correo_extra     = :correoExtra,
+        clave_extra      = :claveExtra,
         estado           = CASE WHEN :fechaFin < CURRENT_DATE THEN 'VENCIDO' ELSE 'ACTIVO' END
     WHERE cuenta_id = :cuentaId
       AND id_perfil = :perfilId
     """)
    Mono<Integer> actualizarCliente(Long cuentaId, Long perfilId,
          Long clienteId, String nombre, String telefono,
-         LocalDate fechaInicio, LocalDate fechaFin);
+         LocalDate fechaInicio, LocalDate fechaFin, String correoExtra, String claveExtra);
 
    @Query("INSERT INTO perfiles (cuenta_id, estado) VALUES (:cuentaId, 'LIBRE')")
    Mono<Integer> insertarLibre(Long cuentaId);

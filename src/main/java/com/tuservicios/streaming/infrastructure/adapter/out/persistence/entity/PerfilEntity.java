@@ -44,4 +44,10 @@ public class PerfilEntity {
 
    @Column("estado")
    private String estado;
+
+   @Column("correo_extra")
+   private String correoExtra;
+
+   @Column("clave_extra")
+   private String claveExtra;
 }

@@ -12,5 +12,9 @@ public record PerfilRequest(
       LocalDate fechaInicio,
 
       @NotNull(message = "La fecha de fin es obligatoria")
-      LocalDate fechaFin
+      LocalDate fechaFin,
+
+      String correoExtra,
+
+      String claveExtra
 ) {}

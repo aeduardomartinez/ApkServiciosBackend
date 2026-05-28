@@ -7,5 +7,7 @@ public record ServicioListItemResponse(
       int maxPerfilesBase,
       int maxPerfilesExtra,
       double valorBase,
-      double valorPerfil
+      double valorPerfil,
+      double costoPerfilExtra,
+      double valorPerfilExtra
 ) {}

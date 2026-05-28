@@ -46,7 +46,7 @@ public class CuentaPersistenceMapper {
       }
 
       return new PerfilCuenta(e.getIdPerfil(), cliente, e.getFechaInicio(),  // fechas del perfil, no del cliente
-            e.getFechaFin(), estado);
+            e.getFechaFin(), estado, e.getCorreoExtra(), e.getClaveExtra());
    }
 
    private String clienteNombre(PerfilCuenta p) {

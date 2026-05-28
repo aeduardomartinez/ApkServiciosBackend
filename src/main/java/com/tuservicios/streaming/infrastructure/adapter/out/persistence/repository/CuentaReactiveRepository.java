@@ -22,4 +22,7 @@ public interface CuentaReactiveRepository extends R2dbcRepository<CuentaEntity, 
    @Query("UPDATE cuentas SET clave = :clave WHERE id = :id")
    Mono<Integer> updateClavePrincipal(Long id, String clave);
 
+   @Query("UPDATE cuentas SET cupos_extra_contratados = cupos_extra_contratados + 1 WHERE id = :id")
+   Mono<Integer> incrementarCupoExtra(Long id);
+
 }

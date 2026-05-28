@@ -15,7 +15,9 @@ public class ServicioWebMapper {
             s.getMaxPerfilesBase(),
             s.getMaxPerfilesExtra(),
             s.getValorBase(),
-            s.getValorPerfil()
+            s.getValorPerfil(),
+            s.getCostoPerfilExtra(),
+            s.getValorPerfilExtra()
       );
    }
 }

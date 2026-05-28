@@ -21,11 +21,13 @@ public interface CuentaRepositoryPort {
    Mono<Void> liberarPerfil(Long cuentaId, Long perfilId);
 
    // Recibe clienteId + fechas por separado
-   Mono<Void> asignarClienteEnPerfilLibre(Long cuentaId, Long clienteId, Cliente cliente, LocalDate fechaInicio, LocalDate fechaFin);
+   Mono<Void> asignarClienteEnPerfilLibre(Long cuentaId, Long clienteId, Cliente cliente, LocalDate fechaInicio, LocalDate fechaFin, String correoExtra, String claveExtra);
 
-   Mono<Void> actualizarClienteEnPerfil(Long cuentaId, Long perfilId, Long clienteId, Cliente cliente, LocalDate fechaInicio, LocalDate fechaFin);
+   Mono<Void> actualizarClienteEnPerfil(Long cuentaId, Long perfilId, Long clienteId, Cliente cliente, LocalDate fechaInicio, LocalDate fechaFin, String correoExtra, String claveExtra);
 
    Mono<Void> crearPerfilesIniciales(Long cuentaId, int cantidad);
+
+   Mono<Void> incrementarCupoExtra(Long cuentaId);
 
    Flux<Cuenta> findByServicioId(Long servicioId);
 

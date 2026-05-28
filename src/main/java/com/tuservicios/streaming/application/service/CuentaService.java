@@ -64,31 +64,31 @@ public class CuentaService implements CuentaUseCase {
                          .switchIfEmpty(Mono.error(new ServicioNotFoundException("Servicio con ID " + servicioId + " no encontrado")))
                          .flatMap(servicio -> {
 
-                            // 1) Crear agregado raíz (SIN perfiles aún; se crearán en BD)
-                            Cuenta cuenta = new Cuenta(
-                                 null,
-                                  servicio,
-                                  clave,
-                                  correo,
-                                  inicio,
-                                  fin,
-                                  0,
-                                  List.of()       // perfiles vacíos en memoria
-                            );
+                          // 1) Crear agregado raíz (SIN perfiles aún; se crearán en BD)
+                          Cuenta cuenta = new Cuenta(
+                               null,
+                                servicio,
+                                clave,
+                                correo,
+                                inicio,
+                                fin,
+                                0,
+                                List.of()       // perfiles vacíos en memoria
+                          );
 
-                            // 2) Persistir cuenta
-                            return cuentaRepo.save(cuenta)
+                          // 2) Persistir cuenta
+                          return cuentaRepo.save(cuenta);
+                       })
+                       .flatMap(saved -> {
+                          // 3) Crear perfiles base en BD
+                          int cantidad = saved.getServicio().totalCuposPermitidos(saved.getCuposExtraContratados());
+                          log.info("Creando perfiles iniciales: cuentaId={}, cantidad={}", saved.getId(), cantidad);
 
-                                             // 3) Crear perfiles base en BD
-                                             .flatMap(saved -> {
-                                                int cantidad = servicio.totalCuposPermitidos(saved.getCuposExtraContratados());
-                                                log.info("Creando perfiles iniciales: cuentaId={}, cantidad={}", saved.getId(), cantidad);
-
-                                                return cuentaRepo.crearPerfilesIniciales(saved.getId(), cantidad)
-                                                                 .then(cuentaRepo.findById(saved.getId()));
-                                             });
-                         })
-                         .onErrorResume(this::manejarErrorCreacion));
+                          return cuentaRepo.crearPerfilesIniciales(saved.getId(), cantidad)
+                                           .thenReturn(saved); // thenReturn es más rápido que consultar findById nuevamente aquí si no necesitamos los perfiles cargados para la respuesta inmediata, o findById si es estrictamente necesario.
+                       })
+                       .flatMap(saved -> cuentaRepo.findById(saved.getId())) // Recuperar la cuenta completa con perfiles
+                       .onErrorResume(this::manejarErrorCreacion));
    }
    /**
     * Maneja errores de creación, especialmente duplicados de correo
@@ -138,7 +138,7 @@ public class CuentaService implements CuentaUseCase {
    // CuentaService.java — método asociarUsuario actualizado
    @Override
    public Mono<Cuenta> asociarUsuario(Long cuentaId, Long clienteId,
-         LocalDate fechaInicio, LocalDate fechaFin) {
+         LocalDate fechaInicio, LocalDate fechaFin, String correoExtra, String claveExtra) {
       log.info("Asignando clienteId={} a cuentaId={}", clienteId, cuentaId);
 
       return inTx(
@@ -147,15 +147,16 @@ public class CuentaService implements CuentaUseCase {
                                        new ClienteNoEncontradoException("Cliente " + clienteId + " no encontrado")))
                                  .flatMap(cr -> {
                                     Cliente cliente = new Cliente(cr.id(), cr.nombreCompleto(), cr.telefono());
-                                    return cuentaRepo.asignarClienteEnPerfilLibre(
-                                          cuentaId, clienteId, cliente, fechaInicio, fechaFin);
-                                 })
+                                     return cuentaRepo.asignarClienteEnPerfilLibre(
+                                           cuentaId, clienteId, cliente, fechaInicio, fechaFin, correoExtra, claveExtra);
+                                  })
                                  .then(cuentaRepo.findById(cuentaId))
       );
-   }@Override
+   }
+   @Override
    public Mono<Cuenta> editarPerfil(Long cuentaId, Long perfilId,
          Long clienteId,
-         LocalDate fechaInicio, LocalDate fechaFin) {
+         LocalDate fechaInicio, LocalDate fechaFin, String correoExtra, String claveExtra) {
       log.info("Editando perfilId={} en cuentaId={} → nuevo clienteId={}", perfilId, cuentaId, clienteId);
 
       return inTx(
@@ -164,12 +165,29 @@ public class CuentaService implements CuentaUseCase {
                                        new ClienteNoEncontradoException("Cliente " + clienteId + " no encontrado")))
                                  .flatMap(cr -> {
                                     Cliente cliente = new Cliente(cr.id(), cr.nombreCompleto(), cr.telefono());
-                                    return cuentaRepo.actualizarClienteEnPerfil(
-                                          cuentaId, perfilId, clienteId, cliente, fechaInicio, fechaFin);
-                                 })
+                                     return cuentaRepo.actualizarClienteEnPerfil(
+                                           cuentaId, perfilId, clienteId, cliente, fechaInicio, fechaFin, correoExtra, claveExtra);
+                                  })
                                  .then(cuentaRepo.findById(cuentaId))
       );
    }
+   @Override
+   public Mono<Cuenta> agregarCupoExtra(Long cuentaId) {
+      log.info("Agregando un cupo extra a la cuenta {}", cuentaId);
+      return inTx(
+          cuentaRepo.findById(cuentaId)
+              .switchIfEmpty(Mono.error(new CuentaNoEncontradaException("Cuenta no encontrada")))
+              .flatMap(cuenta -> {
+                  if (cuenta.getCuposExtraContratados() >= cuenta.getServicio().getMaxPerfilesExtra()) {
+                      return Mono.error(new IllegalStateException("Se ha alcanzado el límite de perfiles extras para este servicio"));
+                  }
+                  return cuentaRepo.incrementarCupoExtra(cuentaId)
+                                   .then(cuentaRepo.crearPerfilesIniciales(cuentaId, 1)) // Crea 1 nuevo slot LIBRE en DB
+                                   .then(cuentaRepo.findById(cuentaId));
+              })
+      );
+   }
+
    /**
     * Requerimiento 5: Libera un cupo sin borrar el historial.
     * <p>
