@@ -30,7 +30,10 @@ public class CuentaWebMapper {
             c.getClave(),
             c.getFechaInicio(),
             c.getFechaFin(),
-            mapPerfiles(c)
+            mapPerfiles(c),
+            c.getServicio().getMaxPerfilesBase(),
+            c.getServicio().getMaxPerfilesExtra(),
+            c.getCuposExtraContratados()
       );
    }
 
