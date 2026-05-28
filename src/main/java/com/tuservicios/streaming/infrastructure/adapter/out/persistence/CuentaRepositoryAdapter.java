@@ -66,6 +66,14 @@ public class CuentaRepositoryAdapter implements CuentaRepositoryPort {
    }
 
    @Override
+   public Mono<Void> agregarPerfilesLibres(Long cuentaId, int cantidad) {
+      if (cantidad <= 0) {
+         return Mono.empty();
+      }
+      return Flux.range(0, cantidad).concatMap(i -> perfilRepo.insertarLibre(cuentaId)).then();
+   }
+
+   @Override
    public Mono<Void> incrementarCupoExtra(Long cuentaId) {
       return cuentaRepo.incrementarCupoExtra(cuentaId)
             .flatMap(rows -> rows == 1 ? Mono.<Void>empty() : Mono.error(new CuentaNoEncontradaException("Cuenta no encontrada")));

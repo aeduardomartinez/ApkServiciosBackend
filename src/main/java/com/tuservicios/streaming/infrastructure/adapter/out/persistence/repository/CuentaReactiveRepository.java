@@ -1,5 +1,6 @@
 package com.tuservicios.streaming.infrastructure.adapter.out.persistence.repository;
 
+import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.stereotype.Repository;
@@ -16,13 +17,16 @@ public interface CuentaReactiveRepository extends R2dbcRepository<CuentaEntity, 
    Flux<CuentaEntity> findByCorreoPrincipal(String correo);
    Flux<CuentaEntity> findByServicioId(Long servicioId);
 
+   @Modifying
    @Query("UPDATE cuentas SET correo_principal = :correo WHERE id = :id")
    Mono<Integer> updateCorreoPrincipal(Long id, String correo);
 
+   @Modifying
    @Query("UPDATE cuentas SET clave = :clave WHERE id = :id")
    Mono<Integer> updateClavePrincipal(Long id, String clave);
 
-   @Query("UPDATE cuentas SET cupos_extra_contratados = cupos_extra_contratados + 1 WHERE id = :id")
+   @Modifying
+   @Query("UPDATE cuentas SET cupos_extra_contratados = COALESCE(cupos_extra_contratados, 0) + 1 WHERE id = :id")
    Mono<Integer> incrementarCupoExtra(Long id);
 
 }

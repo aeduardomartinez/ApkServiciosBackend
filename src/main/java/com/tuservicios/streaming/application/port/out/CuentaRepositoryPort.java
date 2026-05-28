@@ -27,6 +27,8 @@ public interface CuentaRepositoryPort {
 
    Mono<Void> crearPerfilesIniciales(Long cuentaId, int cantidad);
 
+   Mono<Void> agregarPerfilesLibres(Long cuentaId, int cantidad);
+
    Mono<Void> incrementarCupoExtra(Long cuentaId);
 
    Flux<Cuenta> findByServicioId(Long servicioId);

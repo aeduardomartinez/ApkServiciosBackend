@@ -182,7 +182,7 @@ public class CuentaService implements CuentaUseCase {
                       return Mono.error(new IllegalStateException("Se ha alcanzado el límite de perfiles extras para este servicio"));
                   }
                   return cuentaRepo.incrementarCupoExtra(cuentaId)
-                                   .then(cuentaRepo.crearPerfilesIniciales(cuentaId, 1)) // Crea 1 nuevo slot LIBRE en DB
+                                   .then(cuentaRepo.agregarPerfilesLibres(cuentaId, 1)) // Crea 1 nuevo slot LIBRE en DB
                                    .then(cuentaRepo.findById(cuentaId));
               })
       );
