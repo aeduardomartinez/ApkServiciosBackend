@@ -2,6 +2,7 @@ package com.tuservicios.streaming.infrastructure.adapter.out.persistence.reposit
 
 import java.time.LocalDate;
 
+import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.stereotype.Repository;
@@ -69,6 +70,7 @@ public interface PerfilReactiveRepository extends R2dbcRepository<PerfilEntity, 
    Mono<Long> countByCuentaId(Long cuentaId);
 
    // Update "liberar"
+   @Modifying
    @Query("""
          UPDATE perfiles
          SET nombre_cliente = NULL,
@@ -83,6 +85,7 @@ public interface PerfilReactiveRepository extends R2dbcRepository<PerfilEntity, 
          """)
    Mono<Integer> liberarPerfil(Long cuentaId, Long perfilId);
 
+   @Modifying
    @Query("""
     UPDATE perfiles
     SET cliente_id       = :clienteId,
@@ -101,6 +104,7 @@ public interface PerfilReactiveRepository extends R2dbcRepository<PerfilEntity, 
          Long clienteId, String nombre, String telefono,
          LocalDate fechaInicio, LocalDate fechaFin, String correoExtra, String claveExtra);
 
+   @Modifying
    @Query("""
     UPDATE perfiles
     SET cliente_id       = :clienteId,
@@ -118,6 +122,7 @@ public interface PerfilReactiveRepository extends R2dbcRepository<PerfilEntity, 
          Long clienteId, String nombre, String telefono,
          LocalDate fechaInicio, LocalDate fechaFin, String correoExtra, String claveExtra);
 
+   @Modifying
    @Query("INSERT INTO perfiles (cuenta_id, estado) VALUES (:cuentaId, 'LIBRE')")
    Mono<Integer> insertarLibre(Long cuentaId);
 
